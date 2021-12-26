@@ -1,0 +1,10 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\src",
+    "\\src\\devices",
+    "\\src\\threads"
+  ],
+  "SelectedNode": "\\src\\devices\\timer.c",
+  "PreviewInSolutionExplorer": false
+}
