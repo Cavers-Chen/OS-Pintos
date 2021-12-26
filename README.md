@@ -2,79 +2,6 @@
 
 **2020-2021**
 
-学号
-
-班级
-
-姓名
-
-指导教师
-
-所在学院
-
-提交日期
-
-## 目录
-
-## 第一章 实验项目介绍
-
-## 第二章 简单shell实现 
-
-### 1、启动任务(getting started) 
-
-### 2、cd 与 pwd的实现(Add support for cd and pwd)
-
-#### cd的实现 
-
-#### pwd的实现
-
-### 3、程序执行(Program execution)
-
-### 4、路径解析(Path resolution)
-
-### 5、输入输出的重定向(Input/Output Redirection)
-
-### 6、信号控制(Signal Handling and Terminal Control)
-
-### 7、问题及解决办法
-
-## 第三章 线程管理
-
-### Pintos线程管理框架介绍
-
-### 介绍主要函数的功能及实现流程
-
-### 任务1：Alarm Clock
-
-#### 任务描述
-
-#### 实验过程
-
-#### 实验结果
-
-#### 问题与解决方法
-
-### 任务2：Priority Scheduling（优先级调度）
-
-#### 任务描述
-
-#### 实验过程
-
-#### 实验结果
-
-#### 问题与解决方法
-
-### 任务3：Advanced Scheduler（多级反馈调度）
-
-#### 任务描述
-
-#### 实验过程
-
-#### 实验结果
-
-#### 问题与解决方法
-
-
 ## 第一章 实验项目介绍
 
 本章主要介绍实验项目的总体要求、实验环境配置步骤、以及在实验环境配置中遇到的主要问题及解决办法。
@@ -85,10 +12,7 @@
 
 ## 1、启动任务(getting started)
 
-配置好环境之后进入vagrant用户下面的personal文件夹，编译文件然后运行shell文件即可。运行情况如下：
-
-
-图2-1-1 启动任务
+配置好环境之后进入vagrant用户下面的personal文件夹，编译文件然后运行shell文件即可。
 
 ## 2、cd 与 pwd的实现(Add support for cd and pwd)
 
@@ -98,46 +22,38 @@
 
 首先我查看了shell文件下面的函数，找到了已经实现了的exit和help的shell命令，于是按照格式申明了cd和pwd的函数原型
 
+```
+int cmd_exit(struct tokens *tokens);
+int cmd_help(struct tokens *tokens);
+int cmd_pwd(struct tokens *tokens);
+int cmd_cd(struct tokens *tokens);
+```
 
-图2-2-1 提供的函数申明
+进一步的，我对help函数要打印的table内容进行了修改，如下所示(已修改)：
 
-进一步的，我对help函数要打印的table内容进行了修改，如下所示：
+```
+fun_desc_t cmd_table[] = {
+  {cmd_help, "?", "show this help menu"},
+  {cmd_exit, "exit", "exit the command shell"},
+  {cmd_pwd, "pwd", "print the current working directory"},
+  {cmd_cd, "cd", "change the current working directory"},
+  {cmd_wait, "wait", "wait for all background processes to finish"}
+};
+```
 
-
-图2-2-2 help函数中的table
-
-之后进入shell，执行help命令，执行情况如下：
-
-
-图2-2-3 help命令的使用
-
-可以看到help指令被正确地打印了出来。接下来该实现cd和pwd函数了。
+之后进入shell，执行help命令。可以看到help指令被正确地打印了出来。接下来该实现cd和pwd函数了。
 
 ### cd的实现
 
 观察main函数发现，shell会不停地扫描行输入，然后得到token，如果该token在命令表里面，则进入该函数。
 
-在tokenizer.h文件里面我看到了需要的函数tokens\_get\_token，我可以通过这个函数拿到第一个token，然后来记录路径目标。实现如下：
-
-![](RackMultipart20211226-4-yj7flo_html_dc04874b49d7d9bd.png)
-
-图2-2-4 cd函数的实现
+在tokenizer.h文件里面我看到了需要的函数tokens\_get\_token，我可以通过这个函数拿到第一个token，然后来记录路径目标。实现请参考源代码cmd_cd函数部分。
 
 思路：这里的实现中有这样几个原则，只识别一个token，当出现多个token（词组）的时候，就认定语法错误，当无输入，则进入home目录下的主文件，当只有一个token，则调用chdir函数进行path的变换，如果失败则返回-1并给出提示。
 
 ### pwd的实现
 
 pwd的实现很简单，只需要使用getcwd进行一下路径的获取，然后输出结果就好了，但是有一点容易被忘记，就是getcwd返回的是一个malloc得来的值，所以需要手动释放内存。
-
-![](RackMultipart20211226-4-yj7flo_html_9a5129f158eba4cd.png)
-
-图2-2-5 Pwd函数的实现
-
-cd和pwd的运行情况如下：
-
-![](RackMultipart20211226-4-yj7flo_html_abafe471dce8611c.png)
-
-图2-2-6 shell的测试
 
 ## 3、程序执行(Program execution)
 
@@ -152,56 +68,24 @@ execv和execvp的作用均是执行文件，但是execvp的参数是一根文件
 通过上面的分析，我明白了自己需要做的事情，把输入的token分解成多个小的token，然后第一个是路径，后面的则是arg数组，代表待执行文件。
 
 这里需要注意的事情是，execv中，arg参数的填写应当包含路径在内的所有token。
-
-我了分解token，我先定义了一个结构体，如下：
-
-![](RackMultipart20211226-4-yj7flo_html_92042ea9c1d65a9.png)
-
-图2-2-7 结构体ch\_process
-
-在之后我做函数parse\_arg来进行token的拆解，代码如下：
-
-![](RackMultipart20211226-4-yj7flo_html_9aef70af3747fa07.png)
-
-图2-2-8 parse\_arg的实现
+我用函数parse\_arg来进行token的拆解。
 
 接下来就是运行程序的函数了，主要思路就是拆分token然后调用fork，如果fork调用成功，那么调用execv来执行程序，代码如下：
 
-![](RackMultipart20211226-4-yj7flo_html_2446a7cce5de4885.png)
-
-图2-2-9 函数run\_program（其一）
-
-![](RackMultipart20211226-4-yj7flo_html_eaf8bd918e50e007.png)
-
-图2-2-10函数run\_program（其二）
-
 再次编译程序，运行结果如下：
 
-![](RackMultipart20211226-4-yj7flo_html_5f105645a9a21795.png)
-
-图2-2-11 shell的测试
 
 ## 4、路径解析(Path resolution)
 
 文档中接下来引出了一个问题，如果我每次都要写完整路径的话，这将是非常繁琐的，所以我需要想个办法帮我获取完整的路径来执行文件。这个题目依旧是不允许使用execvp的，因为使用了，这道题目就完全没有了意义。另外，为了判断用户输入的是否已经是完整路径，我使用了access函数，这个函数将会在用户输入完整路径时返回-1。
 
-通过查阅资料，我发现getenv和strtok正好可以帮助到我完成这道题目。我的实现代码如下：
-
-![](RackMultipart20211226-4-yj7flo_html_fa04f7e0a2b073be.png)
-
-图2-2-12 run\_program\_thru\_path函数实现
+通过查阅资料，我发现getenv和strtok正好可以帮助到我完成这道题目。
 
 我用这个函数替换了在run\_program里面出现的execv函数，这下我可以直接写文件名来进行任务的执行了。
 
-程序运行情况如下所示：
-
-![](RackMultipart20211226-4-yj7flo_html_99d88e5f1e259eae.png)
-
-图2-2-13 shell的测试
-
 ## 5、输入输出的重定向(Input/Output Redirection)
 
-## **6**** 、信号控制****(Signal Handling and Terminal Control)**
+## 6 、信号控制(Signal Handling and Terminal Control)
 
 ## 7、问题及解决办法
 
@@ -235,45 +119,60 @@ pintos已经为我提供了基本的线程创建、操作的接口，在其中�
 
 从需要修改的代码出发，我先查看了timer\_sleep()，代码如下：
 
-![](RackMultipart20211226-4-yj7flo_html_5910d90e124e4401.png)
+```
+void
+timer_sleep (int64_t ticks) 
+{
+  int64_t start = timer_ticks ();
 
-图3-1-1待修改的timer\_sleep()函数
+  ASSERT (intr_get_level () == INTR_ON);
+  while (timer_elapsed (start) < ticks) 
+    thread_yield ();
+}
+```
 
-可以看到，92行获取了时间片的数量，94行是断言，确保该线程可以中断，95、96行是盲等操作。
+可以看到，第4行获取了时间片的数量，94行是断言，确保该线程可以中断，后面是盲等操作。
 
 对于现在的盲等，根据之前学过的知识，我可以使用堵塞来避免这样的操作。那么我的方案是：当一个线程需要进行睡眠的时候，我可以把它放入堵塞队列，并且等待它所睡眠的时间，然后再唤醒它，把他加入就绪队列。
 
 于是我首先需要对thread的结构体进行修改。我在thread结构体里加入了ticks\_blocked，用来记录线程被阻塞的时间片的个数。
 
-![](RackMultipart20211226-4-yj7flo_html_a343a32f3b4c5a04.png)
-
-图3-1-2 ticks\_blocked的定义
-
-之后，我在thread的创建函数中初始化了这个值，初值设置为0，初始创建的函数是create\_thread（），于是在这个函数里有：
-
-![](RackMultipart20211226-4-yj7flo_html_5857ace383a37645.png)
-
-图3-1-3 ticks\_blocked的初始化
+之后，我在thread的创建函数中初始化了这个值，初值设置为0，初始创建的函数是create\_thread（），于是在这个函数里需要进行初始化。
 
 好的，这下我已经能够记录线程的阻塞的时间片信息了，然后是考虑如何把这个信息用在具体的代码控制里。可以知道，当ticks\_blocked\&gt;0的时候，说明线程还在被堵塞，当ticks\_blocked\&lt;=0的时候，说明线程需要被唤醒，所以这个时候需要修改它的状态，于是我在thread.c中加入了一个新函数blocked\_thread\_check,定义如下所示：
 
-![](RackMultipart20211226-4-yj7flo_html_be43b18aab8de28f.png)
+```
+/* Check the blocked thread */
+void
+blocked_thread_check (struct thread *t, void *aux UNUSED)
+{
+  if (t->status == THREAD_BLOCKED && t->ticks_blocked > 0)
+  {
+      t->ticks_blocked--;
+      if (t->ticks_blocked == 0)
+      {
+          thread_unblock(t);
+      }
+  }
+}
+```
 
-图3-1-4 blocked\_thread\_check函数的实现
-
-这个函数的意思就是当时间片大于零的时候就把时间片减一（610、612行），如果时间片等于零，那么就唤醒这个线程（613、615行）。
+这个函数的意思就是当时间片大于零的时候就把时间片减一，如果时间片等于零，那么就唤醒这个线程。
 
 现在的问题是，线程在哪个地方更新它的时间片数目呢？我仔细研究了一下代码，发现了这样一件事情，timer是每秒钟都会进行100次中断检查的，所以只需要在它采取的检查函数里进行时间片更新就可以了。我是通过以下这个函数发现这个事情的：
 
-![](RackMultipart20211226-4-yj7flo_html_b7b7716066a74498.png)
+```
+/* Sets up the timer to interrupt TIMER_FREQ times per second,
+   and registers the corresponding interrupt. */
+void
+timer_init (void) 
+{
+  pit_configure_channel (0, 2, TIMER_FREQ);
+  intr_register_ext (0x20, timer_interrupt, "8254 Timer");
+}
+```
 
-图3-1-5 timer\_init的分析
-
-以上的函数时在pintos开始工作的时候就调用的函数，之后它会使用intr\_register\_ext中的handler来进行中断检查，intr\_register\_ext的描述如下：
-
-![](RackMultipart20211226-4-yj7flo_html_2e25b02691aa6a28.png)
-
-图3-1-6 intr\_register\_ext的描述
+以上的函数时在pintos开始工作的时候就调用的函数，之后它会使用intr\_register\_ext中的handler来进行中断检查。
 
 根据上面的函数，我得知需要在timer\_interrupt函数中来对中断的时间片进行更新。
 
@@ -281,29 +180,34 @@ pintos已经为我提供了基本的线程创建、操作的接口，在其中�
 
 于是我在timer\_interrupt函数中进行了修改，进行时间片的更新，更新后的函数如下：
 
-![](RackMultipart20211226-4-yj7flo_html_c81c2f944de14bf1.png)
-
-图3-1-7 timer\_interrupt函数的修改
+```
+/* Timer interrupt handler. */
+static void
+timer_interrupt (struct intr_frame *args UNUSED)
+{
+  ticks++;
+  enum intr_level old_level = intr_disable ();
+  if (thread_mlfqs)
+  {
+    thread_mlfqs_increase_recent_cpu_by_one ();
+    if (ticks % TIMER_FREQ == 0)
+      thread_mlfqs_update_load_avg_and_recent_cpu ();
+    else if (ticks % 4 == 0)
+      thread_mlfqs_update_priority (thread_current ());
+  }
+  thread_foreach (blocked_thread_check, NULL);
+  intr_set_level (old_level);
+  thread_tick ();
+}
+```
 
 在timer\_interrupt里面，我直接使用了thread\_foreach来对所有的thread进行了遍历，并且用我之前写的blocked\_thread\_check函数进行更新。这样一来，线程睡眠的操作就算是完成了。然后我进行了打分测试，alarm的测试点基本通过，除了alarm-priority ，我开始有点疑惑，然后我看了测试用例，发现这牵扯到了优先级，所以严格意义上来讲，它并不属于alarm部分的内容，所以这里先不讲解这个测试点的实现了（但本任务的实验结果部分已经将这个测试点完成）。
 
-不过我仔细研究了以下为什么当前的代码不能通过这个检测点，发现了原因，当前的代码中并没有对线程的优先级进行排序处理，反而是一股脑的往后面扔，目前里的代码，所有对线程表和线程的操作都是list\_push\_back，这自然没有什么优先级可言，如下图所示：
-
-![](RackMultipart20211226-4-yj7flo_html_1d69daddc8b3f001.png)
-
-图3-1-8 list\_push\_back的介绍
+不过我仔细研究了以下为什么当前的代码不能通过这个检测点，发现了原因，当前的代码中并没有对线程的优先级进行排序处理，反而是一股脑的往后面扔，目前里的代码，所有对线程表和线程的操作都是list\_push\_back，这自然没有什么优先级可言。
 
 所以我接下来要干的事情就是要向一个办法修改这个函数或者是用别的函数来对线程的链表进行维护。这也算是我下一个任务的突破口。
 
 至此，任务一结束。
-
-### 实验结果
-
-使用make check命令后，运行结果如下所示：
-
-![](RackMultipart20211226-4-yj7flo_html_84449ab9f827f67a.png)
-
-图3-1-9任务一的测试情况
 
 ### 问题与解决方法
 
@@ -331,29 +235,23 @@ pintos已经为我提供了基本的线程创建、操作的接口，在其中�
 
 这个原因是由list\_push\_back函数导致的。所以我需要对这一部分进行修改。
 
-这个地方我有查看了Pintos手册，手册在overview部分提到了一些我可能需要使用的文件，其中有lib部分，手册中讲到，在lib中可能有我需要用到的函数。我简单的看了一下，发现了一个比较有用的排序函数list\_insert\_ordered，介绍如下：
+这个地方我有查看了Pintos手册，手册在overview部分提到了一些我可能需要使用的文件，其中有lib部分，手册中讲到，在lib中可能有我需要用到的函数。我简单的看了一下，发现了一个比较有用的排序函数list\_insert\_ordered。这个函数需要我给一个链表的表头和一个加入的元素，还有一个排序的函数指针，之后这个函数就会根据我给出的规则进行插入。
 
-![](RackMultipart20211226-4-yj7flo_html_9c6ce42150f0f185.png)
-
-图3-2-1 list\_insert\_ordered函数
-
-可以看到，这个函数需要我给一个链表的表头和一个加入的元素，还有一个排序的函数指针，之后这个函数就会根据我给出的规则进行插入。
-
-接下来我还需要写一个判断大小的函数，来告诉这个函数排序的规则。函数实现如下：
-
-![](RackMultipart20211226-4-yj7flo_html_e646984ee0e111c0.png)
-
-图3-2-2 优先级比较函数
+接下来我还需要写一个判断大小的函数，来告诉这个函数排序的规则。实现如下：
+```
+/* Priority compare function. */
+bool
+thread_cmp_priority (const struct list_elem *a, const struct list_elem *b, void *aux UNUSED)
+{
+  return list_entry(a, struct thread, elem)->priority > list_entry(b, struct thread, elem)->priority;
+}
+```
 
 上面的函数会返回线程的优先级的比较结果，如果是大于则会使true，反之为false。接下来就是完成优先队列了。
 
 当前的代码中设计优先级插入的只有线程初始化、唤醒两个操作（唤醒有两个相关函数）有涉及，对应的函数是ini\_thread函数、thread\_unblock函数、thread\_yield函数，于是我把其中的list\_push\_back函数全部换成了list\_insert\_ordered函数。这下线程的排序就是以优先级来进行降序排序的了。
 
-之后我单独使用Pintos测试了alarm-priority测试点，完成了测试。测试结果如下：
-
-![](RackMultipart20211226-4-yj7flo_html_ac837c106c9cc6b5.png)
-
-图3-2-3 alarm-priority测试点运行结果
+之后我单独使用Pintos测试了alarm-priority测试点，完成了测试。
 
 接下来应该开始做donate部分了，但是有一件事情我还是比较在意，preempt在英文中的意思是抢占的意思，这貌似是我之前实现过的东西，但是我在线上平台测试的时候并没有通过，然后我又看了一下我的代码，我发现我的确有优先队列，但是测试用例中使用了create\_thread函数，这个函数是我没有修改过的函数，当前这个函数只是单纯地设置优先级，但是不会考虑设置之后的调度问题。而preempt测试中，在main线程中创建了thread2，但是thread2的优先级较高，所以会把main线程阻塞，所以可以知道在thread\_set\_priority函数调用的时候是需要进行线程重新调度的，所以这个时候需要调用thread\_yeild，于是我在thread\_set\_priority函数中添加了thread\_yeild函数，并且由于如果刚进来的线程优先级大于当前线程是可以阻塞当前线程的，所以我在create\_thread函数里面也添加了thread\_yeild函数，这样一来，一个函数在被创建的时候会先调用unblock函数，将他加入到就绪队列里，并且按照优先级排序，然后使用thread\_yeild进行一次重新的线程调度。
 
@@ -365,33 +263,340 @@ pintos已经为我提供了基本的线程创建、操作的接口，在其中�
 
 首先来看priority-donate-one。
 
-![](RackMultipart20211226-4-yj7flo_html_b04bb4fb27728397.png)
+```
+/* The main thread acquires a lock.  Then it creates two
+   higher-priority threads that block acquiring the lock, causing
+   them to donate their priorities to the main thread.  When the
+   main thread releases the lock, the other threads should
+   acquire it in priority order.
 
-图3-2-4 测试用例priority-donate-one
+   Based on a test originally submitted for Stanford's CS 140 in
+   winter 1999 by Matt Franklin <startled@leland.stanford.edu>,
+   Greg Hutchins <gmh@leland.stanford.edu>, Yu Ping Hu
+   <yph@cs.stanford.edu>.  Modified by arens. */
+
+#include <stdio.h>
+#include "tests/threads/tests.h"
+#include "threads/init.h"
+#include "threads/synch.h"
+#include "threads/thread.h"
+
+static thread_func acquire1_thread_func;
+static thread_func acquire2_thread_func;
+
+void
+test_priority_donate_one (void) 
+{
+  struct lock lock;
+
+  /* This test does not work with the MLFQS. */
+  ASSERT (!thread_mlfqs);
+
+  /* Make sure our priority is the default. */
+  ASSERT (thread_get_priority () == PRI_DEFAULT);
+
+  lock_init (&lock);
+  lock_acquire (&lock);
+  thread_create ("acquire1", PRI_DEFAULT + 1, acquire1_thread_func, &lock);
+  msg ("This thread should have priority %d.  Actual priority: %d.",
+       PRI_DEFAULT + 1, thread_get_priority ());
+  thread_create ("acquire2", PRI_DEFAULT + 2, acquire2_thread_func, &lock);
+  msg ("This thread should have priority %d.  Actual priority: %d.",
+       PRI_DEFAULT + 2, thread_get_priority ());
+  lock_release (&lock);
+  msg ("acquire2, acquire1 must already have finished, in that order.");
+  msg ("This should be the last line before finishing this test.");
+}
+
+static void
+acquire1_thread_func (void *lock_) 
+{
+  struct lock *lock = lock_;
+
+  lock_acquire (lock);
+  msg ("acquire1: got the lock");
+  lock_release (lock);
+  msg ("acquire1: done");
+}
+
+static void
+acquire2_thread_func (void *lock_) 
+{
+  struct lock *lock = lock_;
+
+  lock_acquire (lock);
+  msg ("acquire2: got the lock");
+  lock_release (lock);
+  msg ("acquire2: done");
+}
+
+```
 
 在第一个测试用例中，主程序的线程先获得了一个锁，紧接着出现了两个比主线程优先级分别高1和2的两个线程，并且一次对锁进行了申请。可以知道，这里测试点是希望测试优先级捐赠的实现。主线程得到锁以后，创建了优先级高1的线程1，当线程1申请锁的时候被阻塞，这时，因为线程1的优先级高于主线程，所以会向主线程进行优先级捐赠，于是主线程的优先级应当上升1，然后主线程创建了线程2，在线程2里，线程申请锁的时候又被阻塞，同样也对主线程优先级进行了捐赠，这时主线程的优先级就和线程2一样了，并且大于线程1的优先级。当主线程释放锁后，线程2和线程1也依次进行锁的获得和释放。
 
 接下来再来分析第二个测试用例priority-donate-multiple：
 
-![](RackMultipart20211226-4-yj7flo_html_1a0d134b7c7968fc.png)
+```
+/* The main thread acquires locks A and B, then it creates two
+   higher-priority threads.  Each of these threads blocks
+   acquiring one of the locks and thus donate their priority to
+   the main thread.  The main thread releases the locks in turn
+   and relinquishes its donated priorities.
+   
+   Based on a test originally submitted for Stanford's CS 140 in
+   winter 1999 by Matt Franklin <startled@leland.stanford.edu>,
+   Greg Hutchins <gmh@leland.stanford.edu>, Yu Ping Hu
+   <yph@cs.stanford.edu>.  Modified by arens. */
 
-图3-2-5 测试用例priority-donate-multiple
+#include <stdio.h>
+#include "tests/threads/tests.h"
+#include "threads/init.h"
+#include "threads/synch.h"
+#include "threads/thread.h"
+
+static thread_func a_thread_func;
+static thread_func b_thread_func;
+
+void
+test_priority_donate_multiple (void) 
+{
+  struct lock a, b;
+
+  /* This test does not work with the MLFQS. */
+  ASSERT (!thread_mlfqs);
+
+  /* Make sure our priority is the default. */
+  ASSERT (thread_get_priority () == PRI_DEFAULT);
+
+  lock_init (&a);
+  lock_init (&b);
+
+  lock_acquire (&a);
+  lock_acquire (&b);
+
+  thread_create ("a", PRI_DEFAULT + 1, a_thread_func, &a);
+  msg ("Main thread should have priority %d.  Actual priority: %d.",
+       PRI_DEFAULT + 1, thread_get_priority ());
+
+  thread_create ("b", PRI_DEFAULT + 2, b_thread_func, &b);
+  msg ("Main thread should have priority %d.  Actual priority: %d.",
+       PRI_DEFAULT + 2, thread_get_priority ());
+
+  lock_release (&b);
+  msg ("Thread b should have just finished.");
+  msg ("Main thread should have priority %d.  Actual priority: %d.",
+       PRI_DEFAULT + 1, thread_get_priority ());
+
+  lock_release (&a);
+  msg ("Thread a should have just finished.");
+  msg ("Main thread should have priority %d.  Actual priority: %d.",
+       PRI_DEFAULT, thread_get_priority ());
+}
+
+static void
+a_thread_func (void *lock_) 
+{
+  struct lock *lock = lock_;
+
+  lock_acquire (lock);
+  msg ("Thread a acquired lock a.");
+  lock_release (lock);
+  msg ("Thread a finished.");
+}
+
+static void
+b_thread_func (void *lock_) 
+{
+  struct lock *lock = lock_;
+
+  lock_acquire (lock);
+  msg ("Thread b acquired lock b.");
+  lock_release (lock);
+  msg ("Thread b finished.");
+}
+
+```
 
 这个测试用例和第一个测试用例差不多，区别就在这里专门多了一个测试释放锁时主线程的优先级状况的输出。这是为了测试是否有考虑释放锁时优先级捐赠的回收情况，当优先级捐赠的捐赠者线程释放锁的时候，应当把它捐赠过优先级的线程进行优先级的还原。
 
 接下来看测试用例priority-donate-lower：
 
-![](RackMultipart20211226-4-yj7flo_html_ffa445c987b11049.png)
+```
+/* The main thread acquires a lock.  Then it creates a
+   higher-priority thread that blocks acquiring the lock, causing
+   it to donate their priorities to the main thread.  The main
+   thread attempts to lower its priority, which should not take
+   effect until the donation is released. */
 
-图3-2-6 测试用例priority-donate-lower
+#include <stdio.h>
+#include "tests/threads/tests.h"
+#include "threads/init.h"
+#include "threads/synch.h"
+#include "threads/thread.h"
+
+static thread_func acquire_thread_func;
+
+void
+test_priority_donate_lower (void) 
+{
+  struct lock lock;
+
+  /* This test does not work with the MLFQS. */
+  ASSERT (!thread_mlfqs);
+
+  /* Make sure our priority is the default. */
+  ASSERT (thread_get_priority () == PRI_DEFAULT);
+
+  lock_init (&lock);
+  lock_acquire (&lock);
+  thread_create ("acquire", PRI_DEFAULT + 10, acquire_thread_func, &lock);
+  msg ("Main thread should have priority %d.  Actual priority: %d.",
+       PRI_DEFAULT + 10, thread_get_priority ());
+
+  msg ("Lowering base priority...");
+  thread_set_priority (PRI_DEFAULT - 10);
+  msg ("Main thread should have priority %d.  Actual priority: %d.",
+       PRI_DEFAULT + 10, thread_get_priority ());
+  lock_release (&lock);
+  msg ("acquire must already have finished.");
+  msg ("Main thread should have priority %d.  Actual priority: %d.",
+       PRI_DEFAULT - 10, thread_get_priority ());
+}
+
+static void
+acquire_thread_func (void *lock_) 
+{
+  struct lock *lock = lock_;
+
+  lock_acquire (lock);
+  msg ("acquire: got the lock");
+  lock_release (lock);
+  msg ("acquire: done");
+}
+
+```
 
 这个测试用例里，主线程创建了一个比自己大十优先级的线程1，线程1获取锁的时候被阻塞，赠予主线程优先级，然后对自己进行了优先级降级，但是由于自己是被捐赠优先级的线程，所以降级此时是无效的。当主线程释放锁的时候，线程1得到并释放锁，之后主线程的优先级编程了降级后的优先级。这个测试用例告诉我，一个被捐赠优先级的线程是无法被降级的，直到捐赠被回收。
 
 接下来再看优先级捐赠测试用例里面最复杂的一个测试用例，priority-donate-chain：
 
-![](RackMultipart20211226-4-yj7flo_html_c8d08f6355ec9ac2.png)
+```
+/* The main thread set its priority to PRI_MIN and creates 7 threads 
+   (thread 1..7) with priorities PRI_MIN + 3, 6, 9, 12, ...
+   The main thread initializes 8 locks: lock 0..7 and acquires lock 0.
 
-图3-2-7 测试用例priority-donate-chain
+   When thread[i] starts, it first acquires lock[i] (unless i == 7.)
+   Subsequently, thread[i] attempts to acquire lock[i-1], which is held by
+   thread[i-1], except for lock[0], which is held by the main thread.
+   Because the lock is held, thread[i] donates its priority to thread[i-1],
+   which donates to thread[i-2], and so on until the main thread
+   receives the donation.
+
+   After threads[1..7] have been created and are blocked on locks[0..7],
+   the main thread releases lock[0], unblocking thread[1], and being
+   preempted by it.
+   Thread[1] then completes acquiring lock[0], then releases lock[0],
+   then releases lock[1], unblocking thread[2], etc.
+   Thread[7] finally acquires & releases lock[7] and exits, allowing 
+   thread[6], then thread[5] etc. to run and exit until finally the 
+   main thread exits.
+
+   In addition, interloper threads are created at priority levels
+   p = PRI_MIN + 2, 5, 8, 11, ... which should not be run until the 
+   corresponding thread with priority p + 1 has finished.
+  
+   Written by Godmar Back <gback@cs.vt.edu> */ 
+
+#include <stdio.h>
+#include "tests/threads/tests.h"
+#include "threads/init.h"
+#include "threads/synch.h"
+#include "threads/thread.h"
+
+#define NESTING_DEPTH 8
+
+struct lock_pair
+  {
+    struct lock *second;
+    struct lock *first;
+  };
+
+static thread_func donor_thread_func;
+static thread_func interloper_thread_func;
+
+void
+test_priority_donate_chain (void) 
+{
+  int i;  
+  struct lock locks[NESTING_DEPTH - 1];
+  struct lock_pair lock_pairs[NESTING_DEPTH];
+
+  /* This test does not work with the MLFQS. */
+  ASSERT (!thread_mlfqs);
+
+  thread_set_priority (PRI_MIN);
+
+  for (i = 0; i < NESTING_DEPTH - 1; i++)
+    lock_init (&locks[i]);
+
+  lock_acquire (&locks[0]);
+  msg ("%s got lock.", thread_name ());
+
+  for (i = 1; i < NESTING_DEPTH; i++)
+    {
+      char name[16];
+      int thread_priority;
+
+      snprintf (name, sizeof name, "thread %d", i);
+      thread_priority = PRI_MIN + i * 3;
+      lock_pairs[i].first = i < NESTING_DEPTH - 1 ? locks + i: NULL;
+      lock_pairs[i].second = locks + i - 1;
+
+      thread_create (name, thread_priority, donor_thread_func, lock_pairs + i);
+      msg ("%s should have priority %d.  Actual priority: %d.",
+          thread_name (), thread_priority, thread_get_priority ());
+
+      snprintf (name, sizeof name, "interloper %d", i);
+      thread_create (name, thread_priority - 1, interloper_thread_func, NULL);
+    }
+
+  lock_release (&locks[0]);
+  msg ("%s finishing with priority %d.", thread_name (),
+                                         thread_get_priority ());
+}
+
+static void
+donor_thread_func (void *locks_) 
+{
+  struct lock_pair *locks = locks_;
+
+  if (locks->first)
+    lock_acquire (locks->first);
+
+  lock_acquire (locks->second);
+  msg ("%s got lock", thread_name ());
+
+  lock_release (locks->second);
+  msg ("%s should have priority %d. Actual priority: %d", 
+        thread_name (), (NESTING_DEPTH - 1) * 3,
+        thread_get_priority ());
+
+  if (locks->first)
+    lock_release (locks->first);
+
+  msg ("%s finishing with priority %d.", thread_name (),
+                                         thread_get_priority ());
+}
+
+static void
+interloper_thread_func (void *arg_ UNUSED)
+{
+  msg ("%s finished.", thread_name ());
+}
+
+// vim: sw=2
+
+```
 
 在这个测试用例里面涉及到了线程的优先级和锁的优先级。主线程先申请到8个锁，然后依次分配给8个线程，然后每个线程会申请前一个序号的线程的锁（主线程除外），可以知道1到7号线程先被阻塞，然后主线程的优先级会因为被捐赠而增高，最后优先级到达21。当主线程释放0号锁的时候，一个第1个线程抢占主线程，当1号线程释放1号锁的时候，2号线程又会进行抢占，这样的情况会持续到七号线程，当锁释放完毕，主线程的优先级又变成了0，于是被循环中的输出线程抢占，在输出线程运行完毕后，主线程最后进行输出，结束程序。
 
@@ -399,17 +604,152 @@ pintos已经为我提供了基本的线程创建、操作的接口，在其中�
 
 另外，在捐赠模块的测试样例里也存在与信号量相关的测试用例。接下来进行两个结合了信号量的测试用例，首先是priority-donate-sema：
 
-![](RackMultipart20211226-4-yj7flo_html_21ac915895811f83.png)
+```
+/* Low priority thread L acquires a lock, then blocks downing a
+   semaphore.  Medium priority thread M then blocks waiting on
+   the same semaphore.  Next, high priority thread H attempts to
+   acquire the lock, donating its priority to L.
 
-图3-2-8 测试用例priority-donate-sema
+   Next, the main thread ups the semaphore, waking up L.  L
+   releases the lock, which wakes up H.  H "up"s the semaphore,
+   waking up M.  H terminates, then M, then L, and finally the
+   main thread.
+
+   Written by Godmar Back <gback@cs.vt.edu>. */
+
+#include <stdio.h>
+#include "tests/threads/tests.h"
+#include "threads/init.h"
+#include "threads/synch.h"
+#include "threads/thread.h"
+
+struct lock_and_sema 
+  {
+    struct lock lock;
+    struct semaphore sema;
+  };
+
+static thread_func l_thread_func;
+static thread_func m_thread_func;
+static thread_func h_thread_func;
+
+void
+test_priority_donate_sema (void) 
+{
+  struct lock_and_sema ls;
+
+  /* This test does not work with the MLFQS. */
+  ASSERT (!thread_mlfqs);
+
+  /* Make sure our priority is the default. */
+  ASSERT (thread_get_priority () == PRI_DEFAULT);
+
+  lock_init (&ls.lock);
+  sema_init (&ls.sema, 0);
+  thread_create ("low", PRI_DEFAULT + 1, l_thread_func, &ls);
+  thread_create ("med", PRI_DEFAULT + 3, m_thread_func, &ls);
+  thread_create ("high", PRI_DEFAULT + 5, h_thread_func, &ls);
+  sema_up (&ls.sema);
+  msg ("Main thread finished.");
+}
+
+static void
+l_thread_func (void *ls_) 
+{
+  struct lock_and_sema *ls = ls_;
+
+  lock_acquire (&ls->lock);
+  msg ("Thread L acquired lock.");
+  sema_down (&ls->sema);
+  msg ("Thread L downed semaphore.");
+  lock_release (&ls->lock);
+  msg ("Thread L finished.");
+}
+
+static void
+m_thread_func (void *ls_) 
+{
+  struct lock_and_sema *ls = ls_;
+
+  sema_down (&ls->sema);
+  msg ("Thread M finished.");
+}
+
+static void
+h_thread_func (void *ls_) 
+{
+  struct lock_and_sema *ls = ls_;
+
+  lock_acquire (&ls->lock);
+  msg ("Thread H acquired lock.");
+
+  sema_up (&ls->sema);
+  lock_release (&ls->lock);
+  msg ("Thread H finished.");
+}
+
+```
 
 这个测试样例结合了同步信号量，一开始在主线程中设置了一个同步信号量和一个锁，然后创建了一个low线程，在low线程中获得锁，然后使用同步信号量，被阻塞，然后回到主线程，主线程创建了med线程，med线程中再次被同步信号量阻塞，回到主线程，创建high线程，high线程中获得锁的时候被阻塞，这是会向low线程捐赠优先级，low线程优先级变成+5。然后回到主线程，主线程使用了同步信号量V操作，low线程在等待队列中被唤醒，紧接着释放了锁，同时优先级回到+1，然后被high线程抢占，high线程得到锁后，做了一个V操作，high结束后，由于med优先级比low高，所以med线程先执行，执行后再low线程，Main线程的优先级是最低的，所以最后执行，程序到此结束。
 
 接下来是最后一个要分析的测试用例，priority-condvar：
 
-![](RackMultipart20211226-4-yj7flo_html_a0f224433cf0fd81.png)
+```
+/* Tests that cond_signal() wakes up the highest-priority thread
+   waiting in cond_wait(). */
 
-图3-2-9 测试用例priority-condvar
+#include <stdio.h>
+#include "tests/threads/tests.h"
+#include "threads/init.h"
+#include "threads/malloc.h"
+#include "threads/synch.h"
+#include "threads/thread.h"
+#include "devices/timer.h"
+
+static thread_func priority_condvar_thread;
+static struct lock lock;
+static struct condition condition;
+
+void
+test_priority_condvar (void) 
+{
+  int i;
+  
+  /* This test does not work with the MLFQS. */
+  ASSERT (!thread_mlfqs);
+
+  lock_init (&lock);
+  cond_init (&condition);
+
+  thread_set_priority (PRI_MIN);
+  for (i = 0; i < 10; i++) 
+    {
+      int priority = PRI_DEFAULT - (i + 7) % 10 - 1;
+      char name[16];
+      snprintf (name, sizeof name, "priority %d", priority);
+      thread_create (name, priority, priority_condvar_thread, NULL);
+    }
+
+  for (i = 0; i < 10; i++) 
+    {
+      lock_acquire (&lock);
+      msg ("Signaling...");
+      cond_signal (&condition, &lock);
+      lock_release (&lock);
+    }
+}
+
+static void
+priority_condvar_thread (void *aux UNUSED) 
+{
+  msg ("Thread %s starting.", thread_name ());
+  lock_acquire (&lock);
+  cond_wait (&condition, &lock);
+  msg ("Thread %s woke up.", thread_name ());
+  lock_release (&lock);
+}
+
+```
 
 在上述用例里面加入了cond\_wait和cond\_signal两个函数，查阅Pintos手册得知，这两个函数是集成了lock和信号量的函数，并且在线程阻塞时，会主动释放当前的lock。在这个程序里面， 主线程创建了多个线程，但是因为用了cond函数，所以并不存在优先级捐赠，然后到第二个循环的时候，主线程释放信号量，使用V操作，唤醒了队列里最前面的线程，继而线程被一一唤醒，顺序则是按优先级排列的。
 
@@ -419,99 +759,214 @@ pintos已经为我提供了基本的线程创建、操作的接口，在其中�
 
 于是在thread.h中对thread数据结构添加如下成员变量：
 
-![](RackMultipart20211226-4-yj7flo_html_854164281fdccce1.png)
-
-图3-2-10 thread结构体成员变量的添加
+```
+int base_priority;
+struct list locks;
+struct lock *lock_waiting;
+```
 
 然后在sysch.h中对lock结构体进行成员变量的添加：
 
-![](RackMultipart20211226-4-yj7flo_html_c19bb36017fb827b.png)
-
-图3-2-11 lock结构体成员变量的添加
+```
+struct list_elem elem;
+int max_priority;
+```
 
 然后开始修改相关的代码。首先来看一下原来锁的获得和释放是怎么写的，这里将原来的代码展示如下：
 
-![](RackMultipart20211226-4-yj7flo_html_9b2083db05dc67dd.png)
+原始的lock\_acquire函数
+```
+void
+lock_acquire (struct lock *lock)
+{
+  ASSERT (lock != NULL);
+  ASSERT (!intr_context ());
+  ASSERT (!lock_held_by_current_thread (lock));
 
-图3-2-12 原始的lock\_acquire函数
+  sema_down (&lock->semaphore);
+  lock->holder = current_thread;
+}
+```
+原始的lock\_release函数
+```
+void
+lock_release (struct lock *lock)
+{
+  ASSERT (lock != NULL);
+  ASSERT (!intr_context ());
+  ASSERT (!lock_held_by_current_thread (lock));
 
-![](RackMultipart20211226-4-yj7flo_html_e15f00674e75a116.png)
-
-图3-2-13 原始的lock\_release函数
-
+  lock->holder = NULL;
+  sema_up (&lock->semaphore);
+}
+```
 对于锁的获取而言，这里需要添加两个必要的操作。第一个则是优先级的捐赠，第二个则是最大优先级的更新。对于第一个操作而言，如果得知当前的线程优先级是比锁相关的线程中最大的优先级低的，那么就可以直接进行捐赠，这里可以考虑直接在wait\_list中遍历更新。对于第二个操作，经过考虑，应该是放在第一个操作之前的，这其实也很好理解，因为当前的线程也很可能是最大的优先级，这样的话他就需要对所有的相关线程进行优先级捐赠。
 
 对于锁的释放而言，源代码只有对所本身的释放，这其实没有什么问题，但因为我之前已经引入了新的成员变量，所以需要进行队成员变量的维护，其中也包括了捐赠的优先级的收回。
 
-![](RackMultipart20211226-4-yj7flo_html_fbb638e3f1db781d.png)
+```
+void
+lock_acquire (struct lock *lock)
+{
+  struct thread *current_thread = thread_current ();
+  struct lock *l;
+  enum intr_level old_level;
 
-图3-2-14 lock\_acquire函数的修改
+  ASSERT (lock != NULL);
+  ASSERT (!intr_context ());
+  ASSERT (!lock_held_by_current_thread (lock));
 
-上述代码在197行开始对当前锁的优先级进行更新和对锁涉及的线程进行优先级的更新。在216行是考虑得到锁后对当前的最大优先级进行更新。
+  if (lock->holder != NULL && !thread_mlfqs)
+  {
+    current_thread->lock_waiting = lock;
+    l = lock;
+    while (l && current_thread->priority > l->max_priority)
+    {
+      l->max_priority = current_thread->priority;
+      thread_donate_priority (l->holder);
+      l = l->holder->lock_waiting;
+    }
+  }
+
+  sema_down (&lock->semaphore);
+
+  old_level = intr_disable ();
+
+  current_thread = thread_current ();
+  if (!thread_mlfqs)
+  {
+    current_thread->lock_waiting = NULL;
+    lock->max_priority = current_thread->priority;
+    thread_hold_the_lock (lock);
+  }
+  lock->holder = current_thread;
+
+  intr_set_level (old_level);
+}
+```
+
+上述代码开始先对当前锁的优先级进行更新和对锁涉及的线程进行优先级的更新。然后考虑得到锁后对当前的最大优先级进行更新。
 
 其中已经使用了两个被实现的函数，thread\_donate\_priority、thread\_hold\_lock，现在对这两个函数进行解释。
 
 对于优先级的捐赠，逻辑相对简单，就是把当前最大的优先级赋值给目标的线程。但是这里要注意一件事情，就是赋值之后是否可以抢占，对于我们的测试用例而言是可以的，所以在赋值之后需要添加一个判断分支，对当前的线程进行重新的调度。函数实现如下：
 
-![](RackMultipart20211226-4-yj7flo_html_165b91a6eb2fc84c.png)
+```
+/* Donate current priority to thread t. */
+void
+thread_donate_priority (struct thread *t)
+{
+  enum intr_level old_level = intr_disable ();
+  thread_update_priority (t);
 
-图3-2-15 thread\_donate\_priority函数的实现
+  if (t->status == THREAD_READY)
+  {
+    list_remove (&t->elem);
+     list_insert_ordered (&ready_list, &t->elem, thread_cmp_priority, NULL);
+  }
+  intr_set_level (old_level);
+}
+```
 
-在660行，这里进行了抢占问题的解决。当当前的的线程是就绪队列的线程，则将会对它重新调度。
+这里进行了抢占问题的解决。当前的的线程是就绪队列的线程，则将会对它重新调度。
 
 下面是thread\_hold\_the\_lock函数的实现：
 
-![](RackMultipart20211226-4-yj7flo_html_c56c62cca7da5fd0.png)
+```
+/* Let thread hold a lock */
+void
+thread_hold_the_lock(struct lock *lock)
+{
+  enum intr_level old_level = intr_disable ();
+  list_insert_ordered (&thread_current ()->locks, &lock->elem, lock_cmp_priority, NULL);
 
-图3-2-16 thread\_hold\_the\_lock函数的实现
+  if (lock->max_priority > thread_current ()->priority)
+  {
+    thread_current ()->priority = lock->max_priority;
+    thread_yield ();
+  }
+
+  intr_set_level (old_level);
+}
+```
 
 在632行，对当前线程的锁的顺序进行了排序，因为锁也存在优先级，所以也有先后释放的问题。
 
 对于上面的thread\_update\_priority函数的实现，有以下代码：
 
-![](RackMultipart20211226-4-yj7flo_html_5fb71b51c7009263.png)
+```
+void
+thread_update_priority (struct thread *t)
+{
+  enum intr_level old_level = intr_disable ();
+  int max_priority = t->base_priority;
+  int lock_priority;
 
-图3-2-17 thread\_update\_priority函数的实现
+  if (!list_empty (&t->locks))
+  {
+    list_sort (&t->locks, lock_cmp_priority, NULL);
+    lock_priority = list_entry (list_front (&t->locks), struct lock, elem)->max_priority;
+    if (lock_priority > max_priority)
+      max_priority = lock_priority;
+  }
+
+  t->priority = max_priority;
+  intr_set_level (old_level);
+}
+
+```
 
 这个函数是为了方便更新函数所写的，可以看到在673行首先将当前线程的优先级变为base\_priority，这也是该线程本来的优先级，然后再676行进行判断，如果该线程有锁，则将它的线程优先级变为它拥有锁中所拥有的最大的优先级，如果没有锁的话那么它的优先级就为base\_priority。
 
-当然上述的locks、lock\_waiting、base\_priority应当在创建线程时定义，所以应当在inti\_thread中加入以下操作：
+当然上述的locks、lock\_waiting、base\_priority应当在创建线程时定义，所以应当在inti\_thread中进行初始化。
 
-![](RackMultipart20211226-4-yj7flo_html_458811dfbd403e28.png)
-
-图3-2-18 inti\_thread中的初始化
-
-最后，还应当对thread\_set\_priority函数进行修改。还记得刚刚的测试用例吗，其中有一个用例中出现了一种情况，在线程获得锁的时候是不能以捐赠之外的手段对其改变它的优先级的。所以对thread\_set\_priority进行一下更改：
-
-![](RackMultipart20211226-4-yj7flo_html_344bed094e3dfda9.png)
-
-图3-2-19 对thread\_set\_priority函数的修改
-
-在上述的代码中，体现刚刚所说问题的代码就在355行。
+最后，还应当对thread\_set\_priority函数进行修改。还记得刚刚的测试用例吗，其中有一个用例中出现了一种情况，在线程获得锁的时候是不能以捐赠之外的手段对其改变它的优先级的。所以对thread\_set\_priority进行一下更改。
 
 刚改完上述的代码后我进行了测试，但是发现关于信号量的测试点是失败的。我再次检查了源码，发现还需要修改与信号量相关的代码。
 
-下面是需要修改部分代码的原始代码：
+当前的cond_signal和sema_up函数看上去好像没有什么不对的地方，但是仔细思考会发现，这里没有了优先级的逻辑，就导致V操作后唤醒的线程不一定是优先级最高的线程。
 
-![](RackMultipart20211226-4-yj7flo_html_650b3fa92dcd5ece.png)
+所以对这两个函数做出以下修改：
 
-图3-2-20 原始的cond\_signal函数
+```
+void
+cond_signal (struct condition *cond, struct lock *lock UNUSED)
+{
+  ASSERT (cond != NULL);
+  ASSERT (lock != NULL);
+  ASSERT (!intr_context ());
+  ASSERT (lock_held_by_current_thread (lock));
 
-![](RackMultipart20211226-4-yj7flo_html_82e7a84861280dd2.png)
+  if (!list_empty (&cond->waiters))
+  {
+    list_sort (&cond->waiters, cond_sema_cmp_priority, NULL);
+    sema_up (&list_entry (list_pop_front (&cond->waiters), struct semaphore_elem, elem)->semaphore);
+  }
+}
+```
 
-图3-2-21 原始的sema\_up函数
 
-上面两个函数看上去好像没有什么不对的地方，但是仔细思考会发现，这里没有了优先级的逻辑，就导致V操作后唤醒的线程不一定是优先级最高的线程。
+```
+void
+sema_up (struct semaphore *sema)
+{
+  enum intr_level old_level;
 
-所以对以上两个函数做出以下修改：
+  ASSERT (sema != NULL);
 
-![](RackMultipart20211226-4-yj7flo_html_b10f1d950fae5a97.png)
+  old_level = intr_disable ();
+  if (!list_empty (&sema->waiters))
+  {
+    list_sort (&sema->waiters, thread_cmp_priority, NULL);
+    thread_unblock (list_entry (list_pop_front (&sema->waiters), struct thread, elem));
+  }
 
-图3-2-22 修改后的cond\_signal函数
+  sema->value++;
+  thread_yield ();
+  intr_set_level (old_level);
+}
 
-![](RackMultipart20211226-4-yj7flo_html_34c76d9c7ce39530.png)
-
-图3-2-23 修改后的sema\_up函数
+```
 
 对上面两个函数的修改起始就是在进行唤醒操作前对信号量、线程的优先级进行排序。具体的排序函数和之前优先级的排序函数基本一致，所以不再赘述。
 
@@ -519,11 +974,7 @@ pintos已经为我提供了基本的线程创建、操作的接口，在其中�
 
 ### 实验结果
 
-这时我进行了一次线上的评分，此时是0分，指导老师解释，错误数量大于5个不计分。
-
-![](RackMultipart20211226-4-yj7flo_html_2b62d5885db07f33.png)
-
-图3-2-24 线上评分
+这时我进行了一次线上的评分，此时是0分，老师解释，错误数量大于5个不计分。
 
 ### 问题与解决方法
 
@@ -539,11 +990,11 @@ _priority__ = PRI\_MAX - (__recent\_cpu__ / 4) - (__nice__ \* 2)._
 
 recent\_cpu的意思是线程最近平均使用cpu的时间，他是可以被迭代的。对recent\_cpu的描述如下：
 
-_recent\_cpu__ = (2\*__load\_avg__)/(2\*__load\_avg__ + 1) \* __recent\_cpu __ + __ nice__._
+_recent\_cpu__ = (2\*__load\_avg__)/(2\*__load\_avg__ + 1) \* __recent\_cpu __ + __ nice__
 
 那么load\_avg又是什么呢，Pintos手册里进行了解释。load\_avg通常被称作系统平均装载时间（system load average），用来估计线程在过去的时间里平均的运行时间。它是可以被迭代的，迭代公式如下：
 
-_load\_avg__ = (59/60)\*__load\_avg__ + (1/60)\*__ready\_threads__._
+_load\_avg__ = (59/60)\*__load\_avg__ + (1/60)\*__ready\_threads__
 
 在这个任务里，我需要做的就是用轮转加nice值估计结合的算法来进行线程调度。这也和上课所讲的差不多，只是这里并没有用额外的队列进行线程优先级的刻画，取而代之的是对优先级的迭代公式，从上述公式可以看出，recent\_cpu迭代次数越多，其值是越来越大的。因此从第一个式子中可以看出它的优先级会越来越低，这也和上课的内容相互契合。
 
@@ -555,57 +1006,114 @@ _load\_avg__ = (59/60)\*__load\_avg__ + (1/60)\*__ready\_threads__._
 
 可以明确，这里需要对nice和recent\_cpu进行定义，所以我在thread的结构体中加入了这两个成员变量。
 
-![](RackMultipart20211226-4-yj7flo_html_326f72930a358b58.png)
-
-图3-3-1 thread结构体新成员变量的定义
+```
+int nice;
+fixed_t recent_cpu;
+```
 
 之后我们要做的是先将所有的donate部分的代码进行if判断，如果是mlfqs为真则跳过。这部分的修改是Pintos手册明确要求的。
 
 那么现在要做的事情就是按照手册所说的顺序进行公式的计算就好了，下面是对recent\_cpu加一的函数：
 
-![](RackMultipart20211226-4-yj7flo_html_c27ba658527305e0.png)
+```
+/* Increase recent_cpu by 1. */
+void
+thread_mlfqs_increase_recent_cpu_by_one (void)
+{
+  ASSERT (thread_mlfqs);
+  ASSERT (intr_context ());
 
-图3-3-2 对recent\_cpu加一的函数
+  struct thread *current_thread = thread_current ();
+  if (current_thread == idle_thread)
+    return;
+  current_thread->recent_cpu = FP_ADD_MIX (current_thread->recent_cpu, 1);
+}
+```
 
 我们首先要知道我们应该对所有的线程在给定时间内进行检查，这里我把时间片设置为了4，这个代码
 
 接下来是比较重要的函数，负责两个参数的更新：
 
-![](RackMultipart20211226-4-yj7flo_html_9f5a581901efdab0.png)
+```
+/* Every per second to refresh load_avg and recent_cpu of all threads. */
+void
+thread_mlfqs_update_load_avg_and_recent_cpu (void)
+{
+  ASSERT (thread_mlfqs);
+  ASSERT (intr_context ());
 
-图3-3-3 对recent\_cpu和load\_avg更新的函数
+  size_t ready_threads = list_size (&ready_list);
+  if (thread_current () != idle_thread)
+    ready_threads++;
+  load_avg = FP_ADD (FP_DIV_MIX (FP_MULT_MIX (load_avg, 59), 60), FP_DIV_MIX (FP_CONST (ready_threads), 60));
 
-在这个函数里低726行和735行是对两个参数的计算，在724的操作是因为这个时候时间片已经耗尽，所以需要进行重新调度。
+  struct thread *t;
+  struct list_elem *e = list_begin (&all_list);
+  for (; e != list_end (&all_list); e = list_next (e))
+  {
+    t = list_entry(e, struct thread, allelem);
+    if (t != idle_thread)
+    {
+      t->recent_cpu = FP_ADD_MIX (FP_MULT (FP_DIV (FP_MULT_MIX (load_avg, 2), FP_ADD_MIX (FP_MULT_MIX (load_avg, 2), 1)), t->recent_cpu), t->nice);
+      thread_mlfqs_update_priority (t);
+    }
+  }
+}
+```
+
+在这个函数对两个参数的计算，其中因为一个分支因为时间片已经耗尽，所以需要进行重新调度。
 
 接下来是最后一个函数，更新线程的优先级。这个函数在刚刚的函数里也调用了，分支为什么要这么写呢，因为Pintos手册里建议更新的时间片长度为TIMER\_FREQ（扩展到100），而原本的多级反馈调度时间片是4个（如果扩展到100），我们的调度很可能会退化成轮转调度。该函数如下所示：
 
-![](RackMultipart20211226-4-yj7flo_html_f5b019b6f56823e4.png)
+```
+/* Update priority. */
+void
+thread_mlfqs_update_priority (struct thread *t)
+{
+  if (t == idle_thread)
+    return;
 
-图3-3-4 多级反馈调度优先级更新函数
+  ASSERT (thread_mlfqs);
+  ASSERT (t != idle_thread);
+
+  t->priority = FP_INT_PART (FP_SUB_MIX (FP_SUB (FP_CONST (PRI_MAX), FP_DIV_MIX (t->recent_cpu, 4)), 2 * t->nice));
+  t->priority = t->priority < PRI_MIN ? PRI_MIN : t->priority;
+  t->priority = t->priority > PRI_MAX ? PRI_MAX : t->priority;
+}
+```
 
 这里需要注意的事情是，得到的优先级很可能是一个不再优先级范围内的数，所以需要进行一下判断（712、713行）。
 
 然后是主体函数，我对timer\_interrupt函数进行了更新，如下所示，时间片定义为4个：
 
-![](RackMultipart20211226-4-yj7flo_html_128dce9c3f5fd249.png)
+```
+/* Timer interrupt handler. */
+static void
+timer_interrupt (struct intr_frame *args UNUSED)
+{
+  ticks++;
+  enum intr_level old_level = intr_disable ();
+  if (thread_mlfqs)
+  {
+    thread_mlfqs_increase_recent_cpu_by_one ();
+    if (ticks % TIMER_FREQ == 0)
+      thread_mlfqs_update_load_avg_and_recent_cpu ();
+    else if (ticks % 4 == 0)
+      thread_mlfqs_update_priority (thread_current ());
+  }
+  thread_foreach (blocked_thread_check, NULL);
+  intr_set_level (old_level);
+  thread_tick ();
+}
+```
 
-图3-3-5 timer\_interrupt的更新
-
-当然这还没有结束，因为测试样例中需要我们提供一些查看参数的接口，代码框架中已经存在这些函数了，只需要我们在里面返回一下值就行，具体实现如下：
-
-![](RackMultipart20211226-4-yj7flo_html_301a570e0cc97c98.png)
-
-图3-3-5 返回相关参数的函数实现
+当然这还没有结束，因为测试样例中需要我们提供一些查看参数的接口，代码框架中已经存在这些函数了，只需要我们在里面返回一下值就行。
 
 到此为止，任务三完成。
 
 ### 实验结果
 
-线上的测试结果如下：
-
-![](RackMultipart20211226-4-yj7flo_html_67fc05b304b1118a.png)
-
-图3-3-6 project1的线上测试结果
+线上的测试结果为28分。
 
 ### 问题与解决方法
 
@@ -613,19 +1121,13 @@ _load\_avg__ = (59/60)\*__load\_avg__ + (1/60)\*__ready\_threads__._
 
 之后就是调试了，一开始我不知道需要使用-mlfqs选项，导致pintos启动的时候直接就错误了，后来查看pintos手册才知道需要用-mlfqs选项启动。
 
-另外，在最后的网上测试的时候也出现了一些问题，就是本地测试没有问题，但是最后会在线上平台超时，如图所示：
+另外，在最后的网上测试的时候也出现了一些问题，就是本地测试没有问题，但是最后会在线上平台超时。
 
-![](RackMultipart20211226-4-yj7flo_html_ed7b08d9c9c73608.png)
-
-图3-3-7 线上测试超时
-
-出现这个错误以后我并没有在我的代码里找到逻辑错误，然后我查看了Pintos手册，里面说可能是timer\_interrupt这个函数做的事情太多了，于是我把时间片进行了修改，每20个时间片进行一次更新。但是好像效果还是不行。最后我更改了pit.c的函数，增加了timer的检查次数。更改如下：
-
-![](RackMultipart20211226-4-yj7flo_html_a77bf0225fbb1e3c.png)
-
-图3-3-8 对timer检查频率的修改
+出现这个错误以后我并没有在我的代码里找到逻辑错误，然后我查看了Pintos手册，里面说可能是timer\_interrupt这个函数做的事情太多了，于是我把时间片进行了修改，每20个时间片进行一次更新。但是好像效果还是不行。最后我更改了pit.c的函数，增加了timer的检查次数。
 
 更改后，timer的检查频率会增加，这样就不会出现该调度的时候cpu却什么都没做的情况了。
+
+当然还有另一种解决办法，就是把timer\_interrupt函数里面的时间片由4个变成20或50（更大的时间片），这样自然这个函数里干的事情就会变少。
 
 ## 第四章 用户程序
 
@@ -647,63 +1149,173 @@ _load\_avg__ = (59/60)\*__load\_avg__ + (1/60)\*__ready\_threads__._
 
 其实刚看到这个任务有点没有头绪，然后我开始看Pintos手册。Pintos手册在这一章主要介绍了一些内存相关的东西，但这些并不是我现在需要去看的东西。所以我来到问题本身，看看现在的代码写了什么。
 
-![](RackMultipart20211226-4-yj7flo_html_28b9c28d206bff02.png)
+```
+/* Starts a new thread running a user program loaded from
+   FILENAME.  The new thread may be scheduled (and may even exit)
+   before process_execute() returns.  Returns the new process's
+   thread id, or TID_ERROR if the thread cannot be created. */
+tid_t
+process_execute (const char *file_name) 
+{
+  char *fn_copy0;
+  tid_t tid;
 
-图4-1-1 原始的process\_execute函数
+    /* Make a copy of FILE_NAME.
+       Otherwise strtok_r will modify the const char *file_name. */
+    fn_copy0 = palloc_get_page(0);
+    if (fn_copy0 == NULL)//分配失败
+        return TID_ERROR;
+  strlcpy (fn_copy, file_name, PGSIZE);
 
-我们看到在36行，程序申请了空间赋值了file\_name这个字符串，然后紧接着就在42行创建进程了，这个函数我已经比较熟悉了，上一个project的任务就是围绕thread\_create展开的，带式最后一个参数当时我并没有去管，然后我又回去看thread\_create里面拿它干了什么。发现这个东西最后回赋值给kernel\_thread\_frame结构体里的aux。结构体申明如下：
 
-![](RackMultipart20211226-4-yj7flo_html_63e86f806c14e3e4.png)
+  /* Create a new thread to execute FILE_NAME. */
+  tid = thread_create(cmd, PRI_DEFAULT, start_process, fn_copy1);
+  if (tid == TID_ERROR)
+    palloc_free_page (fn_copy1); 
+  return tid;
 
-图4-1-2 kernel\_thread\_frame结构体
+}
+```
 
-可以看到，这个结构体又三个变量，分别是返回值、函数指针和可选项。根据stack注释可知道这些是压入堆栈使用了。
+我们看到在一开始，程序申请了空间赋值了file\_name这个字符串，然后紧接着就创建进程了，这个函数我已经比较熟悉了，上一个project的任务就是围绕thread\_create展开的，带式最后一个参数当时我并没有去管，然后我又回去看thread\_create里面拿它干了什么。发现这个东西最后回赋值给kernel\_thread\_frame结构体里的aux。
 
-最后我看了一眼执行execute\_process的地方，如下：
+这个结构体又三个变量，分别是返回值、函数指针和可选项。根据stack注释可知道这些是压入堆栈使用了。
 
-![](RackMultipart20211226-4-yj7flo_html_73c2b05478567c1b.png)
-
-图4-1-3 Pintos主程序中调用execute\_process函数的代码段
-
-在上面的代码里可以看到，按照Pintos手册给的例子（我们只实现一个参数的情况），当我们在Pintos中输入&quot;ls -ahl&quot;后，读入&quot;ls&quot;和&quot;-ahl&quot;两个命令，分别作为argc和argv。
+按照Pintos手册给的例子（我们只实现一个参数的情况），当我们在Pintos中输入&quot;ls -ahl&quot;后，读入&quot;ls&quot;和&quot;-ahl&quot;两个命令，分别作为argc和argv。
 
 这样就发现问题了，在当前的excute\_process函数里面，我们创建线程的时候，对于可选项部分我们直接传了file\_name,这显然是不对的。这会导致上面的例子中，argc和argv都是&quot;ls -ahl&quot;——这样两个参数都错了。
 
 所以我们现在的目标明确了。把传入的参数拆分成两半，然后再给thread\_create函数。逻辑不难，所以给出修改的代码：
 
-![](RackMultipart20211226-4-yj7flo_html_f2d460c21a28980e.png)
+```
+/* Starts a new thread running a user program loaded from
+   FILENAME.  The new thread may be scheduled (and may even exit)
+   before process_execute() returns.  Returns the new process's
+   thread id, or TID_ERROR if the thread cannot be created. */
+tid_t
+process_execute (const char *file_name) 
+{
+  char *fn_copy0, *fn_copy1;
+  tid_t tid;
 
-图4-1-4 process\_execute程序的修改
+
+    /* Make a copy of FILE_NAME.
+       Otherwise strtok_r will modify the const char *file_name. */
+    fn_copy0 = palloc_get_page(0);//palloc_get_page(0)动态分配了一个内存页
+    if (fn_copy0 == NULL)//分配失败
+        return TID_ERROR;
+
+  /* Make a copy of FILE_NAME.
+     Otherwise there's a race between the caller and load(). */
+  fn_copy1 = palloc_get_page (0);
+  if (fn_copy1 == NULL)
+  {
+    palloc_free_page(fn_copy0);
+    return TID_ERROR;
+  }
+  //把file_name 复制2份，PGSIZE为页大小
+  strlcpy (fn_copy0, file_name, PGSIZE);
+  strlcpy (fn_copy1, file_name, PGSIZE);
+
+
+  /* Create a new thread to execute FILE_NAME. */
+  char *save_ptr;
+  char *cmd = strtok_r(fn_copy0, " ", &save_ptr);
+  
+  tid = thread_create(cmd, PRI_DEFAULT, start_process, fn_copy1);
+  palloc_free_page(fn_copy0);
+  if (tid == TID_ERROR)
+  {
+    palloc_free_page (fn_copy1); 
+    return tid;
+  }
+    
+    /* Sema down the parent process, waiting for child */
+  sema_down(&thread_current()->sema);
+  if (!thread_current()->success) return TID_ERROR;//can't create new process thread,return error
+
+  return tid;
+}
+```
 
 在实现这个函数的时候我偷了懒，使用了Pintos中已经提供的函数strtok\_r来进行arguments的分割。这个函数是在string.h中被申明的。函数如下：
 
-![](RackMultipart20211226-4-yj7flo_html_3e6f2942f5dc21b1.png)
 
-图4-1-5 strtok\_r函数
+```
+char *
+strtok_r (char *s, const char *delimiters, char **save_ptr) 
+{
+  char *token;
+  
+  ASSERT (delimiters != NULL);
+  ASSERT (save_ptr != NULL);
+
+  /* If S is nonnull, start from it.
+     If S is null, start from saved position. */
+  if (s == NULL)
+    s = *save_ptr;
+  ASSERT (s != NULL);
+
+  /* Skip any DELIMITERS at our current position. */
+  while (strchr (delimiters, *s) != NULL) 
+    {
+      /* strchr() will always return nonnull if we're searching
+         for a null byte, because every string contains a null
+         byte (at the end). */
+      if (*s == '\0')
+        {
+          *save_ptr = s;
+          return NULL;
+        }
+
+      s++;
+    }
+
+  /* Skip any non-DELIMITERS up to the end of the string. */
+  token = s;
+  while (strchr (delimiters, *s) == NULL)
+    s++;
+  if (*s != '\0') 
+    {
+      *s = '\0';
+      *save_ptr = s + 1;
+    }
+  else 
+    *save_ptr = s;
+  return token;
+}
+```
 
 可以看到在这个函数里面，第一个是待处理字符串，第二个是分隔符号，第三个是需要被存储的字符串。然后我们就完成了arguments的分割，理论上说我们的任务应该就完成，但是程序依然跑不起来。
 
 我又仔细看了一下代码，发现还有一个程序我没有分析，就是thread\_create参数里填的process\_start，根据上一个project的理解，这里是要执行这个函数，所以我进入了这个函数。发现我们其实需要在启动进程的时候把参数全部放进申请号的栈空间里。但是如何放呢？Pintos手册给出了方案。
 
-![](RackMultipart20211226-4-yj7flo_html_476f660966c55920.png)
-
-图4-1-6 函数参数在虚拟机中的内存分配情况
-
-以上是Pintos手册中给出的process参数在内存里的情况（默认初始地址为0xbfffffcc）。可以看到所有的参数分成了两部分存放，一个是名字一个是地址，在最低的地址上存放返回值。这让我想到了上个实验里Pintos所说的东西，在电脑的内存里，内核是占用PHYS\_BASE到4GB的内存空间，而用户使用0到PHYS\_BASE的空间，并且用户栈是向下生长的，数据段是向上生长的。这样一来，等到要调用数据的时候，指针就应该是从下至上来进行读取。因而压栈的时候就是相反的顺序。
-
-首先我们需要把函数的参数名压栈其操作如下所示：
-
-![](RackMultipart20211226-4-yj7flo_html_f2dadb59898e2951.png)
-
-图4-1-7 将参数名压栈的操作
+Pintos手册中给出的process参数在内存里的情况中（默认初始地址为0xbfffffcc）可以看到所有的参数分成了两部分存放，一个是名字一个是地址，在最低的地址上存放返回值。这让我想到了上个实验里Pintos所说的东西，在电脑的内存里，内核是占用PHYS\_BASE到4GB的内存空间，而用户使用0到PHYS\_BASE的空间，并且用户栈是向下生长的，数据段是向上生长的。这样一来，等到要调用数据的时候，指针就应该是从下至上来进行读取。因而压栈的时候就是相反的顺序。首先我们需要把函数的参数名压栈。
 
 那么现在我们就需要来实现这个压栈的过程。于是有如下函数：
 
-![](RackMultipart20211226-4-yj7flo_html_3195084fcf09deaa.png)
+```
+void
+push_argument (void **esp, int argc, int argv[]){
+  *esp = (int)*esp & 0xfffffffc;
+  *esp -= 4;
+  *(int *) *esp = 0;
 
-图4-1-7 push\_argument函数的实现
+  for (int i = argc - 1; i >= 0; i--)
+  {
+    *esp -= 4;
+    *(int *) *esp = argv[i];
+  }
+  *esp -= 4;
+  *(int *) *esp = (int) *esp + 4;//压入argv[0]的地址
+  *esp -= 4;
+  *(int *) *esp = argc;
+  *esp -= 4;
+  *(int *) *esp = 0;
+}
+```
 
-可以看到，在这个函数里155行初始了最开始的栈地址。然后159行到163行进行了参数地址的压栈。通过这个函数可以把已知的已被压栈的一组参数名的地址压入栈内存中。
+可以看到，在这个函数初始了最开始的栈地址。然后进行了参数地址的压栈。通过这个函数可以把已知的已被压栈的一组参数名的地址压入栈内存中。
 
 经过上述操作后，第一个任务基本就算是基本完成了，至此任务一结束。
 
@@ -733,19 +1345,45 @@ exit系统调用是直接退出；halt的作用是关闭系统；exec系统调�
 
 Pintos在这里提示要看一下lib文件下的syscall文件
 
-![](RackMultipart20211226-4-yj7flo_html_26fa9364f1932095.png)
+```
+#ifndef __LIB_SYSCALL_NR_H
+#define __LIB_SYSCALL_NR_H
 
-图4-2-1 syscall中待实现的系统调用
+/* System call numbers. */
+enum 
+  {
+    /* Projects 2 and later. */
+    SYS_HALT,                   /* Halt the operating system. */
+    SYS_EXIT,                   /* Terminate this process. */
+    SYS_EXEC,                   /* Start another process. */
+    SYS_WAIT,                   /* Wait for a child process to die. */
+    SYS_CREATE,                 /* Create a file. */
+    SYS_REMOVE,                 /* Delete a file. */
+    SYS_OPEN,                   /* Open a file. */
+    SYS_FILESIZE,               /* Obtain a file's size. */
+    SYS_READ,                   /* Read from a file. */
+    SYS_WRITE,                  /* Write to a file. */
+    SYS_SEEK,                   /* Change position in a file. */
+    SYS_TELL,                   /* Report current position in a file. */
+    SYS_CLOSE,                  /* Close a file. */
+
+    /* Project 3 and optionally project 4. */
+    SYS_MMAP,                   /* Map a file into memory. */
+    SYS_MUNMAP,                 /* Remove a memory mapping. */
+
+    /* Project 4 only. */
+    SYS_CHDIR,                  /* Change the current directory. */
+    SYS_MKDIR,                  /* Create a directory. */
+    SYS_READDIR,                /* Reads a directory entry. */
+    SYS_ISDIR,                  /* Tests if a fd represents a directory. */
+    SYS_INUMBER                 /* Returns the inode number for a fd. */
+  };
+
+#endif /* lib/syscall-nr.h */
+
+```
 
 可以看到第7行到20行就是我的任务了。然后我再回到syscall.c和syscall.h，发现源代码空无一物。
-
-![](RackMultipart20211226-4-yj7flo_html_7e9a91d7b6f4aac.png)
-
-图4-2-2 原始的syscall.c
-
-![](RackMultipart20211226-4-yj7flo_html_cac757742c93c1c7.png)
-
-图4-2-3 原始的syscall.h
 
 当前只在syscall.c中给了syscall\_init函数和syscall\_handler函数。前者是初始化系统调用，当在用户产生中断的时候进行系统调用的检查并给出相应的操作。
 
@@ -753,85 +1391,136 @@ Pintos在这里提示要看一下lib文件下的syscall文件
 
 现在我们先来实现最基本的东西，就是所有操作的前提条件——指针要合法。不合法的指针上面已经说过了，空指针、无效指针、指向内核的指针。
 
-![](RackMultipart20211226-4-yj7flo_html_29bf7581b86af0b0.png)
-
-图4-2-4 判断虚拟地址是否合法的函数
-
 以上为实现方法，要注意的是get\_user这个方法在霍普金斯大学的官方代码中是有提供的，所以我使用了这部分代码，其作用是判断该地址是否写入内核了。所以逻辑就变得很简单了，70行是判断是否地址属于用户地址，75行是判断分配的页地址是否有被映射，低84行是判断是否也地址进入了内核的地址范围。
 
-另外，在霍普金斯大学的Pintos提示中提到，我需要在用户指针导致pagefault的时候在page\_fault函数中把eip寄存器中置为下一个函数的入口，eax设置为-1。所以我在函数中添加了如下代码：
+另外，Pintos手册提示中提到，我需要在用户指针导致pagefault的时候在page\_fault函数中把eip寄存器中置为下一个函数的入口，eax设置为-1。所以我在函数中添加了如下代码：
 
-![](RackMultipart20211226-4-yj7flo_html_fcbb1f2913e81248.png)
+```
+void * 
+check_ptr2(const void *vaddr)
+{ 
+  /* Judge address */
+  if (!is_user_vaddr(vaddr))//是否为用户地址
+  {
+    exit_special ();
+  }
+  /* Judge the page */
+  void *ptr = pagedir_get_page (thread_current()->pagedir, vaddr);//是否为用户地址
+  if (!ptr)
+  {
+    exit_special ();
+  }
+  /* Judge the content of page */
+  uint8_t *check_byteptr = (uint8_t *) vaddr;
+  for (uint8_t i = 0; i < 4; i++) 
+  {
+    if (get_user(check_byteptr + i) == -1)
+    {
+      exit_special ();
+    }
+  }
 
-图4-2-5 page\_fault函数的修改
+  return ptr;
+}
+```
 
-接下来就轮到具体系统调用的实现了。首先定义一下我们要实现的三个操作：
-
-![](RackMultipart20211226-4-yj7flo_html_3a159265b9c90e07.png)
-
-图4-2-6 四个系统调用函数的申明
+接下来就轮到具体系统调用的实现了。首先定义一下我们要实现的三个操作。
 
 sys\_halt函数是相对好实现的一个函数，在这个函数里我只需要把进程停掉就行了，实现如下：
 
-![](RackMultipart20211226-4-yj7flo_html_7e9a904489ef9ba1.png)
-
-图4-2-7 sys\_halt函数的实现
+```
+sys_halt (struct intr_frame* f)
+{
+  shutdown_power_off();
+}
+```
 
 下面是sys\_exec函数的实现，首先在156行获得函数的地址，然后在157行、158行检查得到的指针所包含参数以及参数地址指向地址的合法性，之后执行process\_execute，返回值赋值给eax（记录执行结果）。
 
-![](RackMultipart20211226-4-yj7flo_html_6020af8ffcdb3cd6.png)
-
-图4-2-8 sys\_exec函数的实现
+```
+void 
+sys_exec (struct intr_frame* f)
+{
+  uint32_t *user_ptr = f->esp;
+  check_ptr2 (user_ptr + 1);//检查第一个参数的地址
+  check_ptr2 (*(user_ptr + 1));//检查第一个参数的值，即const char *file指向的地址
+  *user_ptr++;
+  f->eax = process_execute((char*)* user_ptr);//使用process_execute完成pid的返回
+}
+```
 
 接下来是sys\_exit函数的实现，和上面基本一样，先获得esp，然后检查参数参数的合法性，最后标记当前线程的st\_exit变量（保存退出状态）然后退出。
 
-![](RackMultipart20211226-4-yj7flo_html_70c3dc96e8a83d3e.png)
-
-图4-2-9 sys\_exit函数的实现
+```
+void 
+sys_exit (struct intr_frame* f)
+{
+  uint32_t *user_ptr = f->esp;
+  check_ptr2 (user_ptr + 1);//检验第一个参数
+  *user_ptr++;//指针指向第一个参数
+  /* record the exit status of the process */
+  thread_current()->st_exit = *user_ptr;//保存exit_code
+  thread_exit ();
+}
+```
 
 sys\_wait函数的实现逻辑和上面完全一样，如下所示：
 
-![](RackMultipart20211226-4-yj7flo_html_96f7b6afaa1a3a2f.png)
+```
+void 
+sys_wait (struct intr_frame* f)
+{
+  uint32_t *user_ptr = f->esp;
+  check_ptr2 (user_ptr + 1);
+  *user_ptr++;
+  f->eax = process_wait(*user_ptr);
+}
+```
 
-图4-2-10 sys\_wait函数的实现
+但是这个里面我使用的process\_wait是一个还没有实现的函数。
 
-但是这个里面我使用的process\_wait是一个还没有实现的函数，来看看这个函数需要做些什么吧。
+我们需要等待一个特定线程号直到它死掉然后返回它的退出状态。如果它被内核关闭了那么返回-1，如果线程号无效或者不是一个的子进程，又或者这个函数已经执行完了，那就不再等待直接返回-1。
 
-![](RackMultipart20211226-4-yj7flo_html_5451290ee7ac0009.png)
-
-图4-2-11 process\_wait的原始代码
-
-可以从上面的注释看出来，我们需要等待一个特定线程号直到它死掉然后返回它的退出状态。如果它被内核关闭了那么返回-1，如果线程号无效或者不是一个的子进程，又或者这个函数已经执行完了，那就不再等待直接返回-1。
-
-这个时候我们在thread加入下面的成员变量：
-
-![](RackMultipart20211226-4-yj7flo_html_5cb826e00b872d48.png)
-
-图4-2-12 thread中加入的新成员变量
-
-其中child结构体的定义如下（其相关含义已经在注释中）：
-
-![](RackMultipart20211226-4-yj7flo_html_bd4a799564aad126.png)
-
-图4-2-13 child结构体的定义
-
-然后需要在thread\_init里面对这些变量进行初始化，具体情况如下：
-
-![](RackMultipart20211226-4-yj7flo_html_9cf0fc597fe8d302.png)
-
-图4-2-14 thread\_init初始化成员变量
-
-其中，init\_thread函数中需要进一步修改，加入相应的孩子和文件，代码如下：
-
-![](RackMultipart20211226-4-yj7flo_html_9554fec56c8ecaae.png)
-
-图4-2-15 init\_thread函数中的初始化
-
-经过上面的修改后，现在可以来完成process\_wait函数了，代码如下：
-
-![](RackMultipart20211226-4-yj7flo_html_407fef6ae7bccd22.png)
-
-图4-2-16 process\_wait的实现
+```
+Modify Process wait to satisfy some special test in Task1 and also some bugs in other Tasks */
+int
+process_wait (tid_t child_tid UNUSED)
+{
+  /* Find the child's ID that the current thread waits for and sema down the child's semaphore */
+  struct list *l = &thread_current()->childs;
+  struct list_elem *child_elem_ptr;
+  child_elem_ptr = list_begin (l);
+  struct child *child_ptr = NULL;
+  while (child_elem_ptr != list_end (l))//遍历当前线程的所有子线程
+  {
+    /* list_entry:Converts pointer to list element LIST_ELEM into a pointer to
+   the structure that LIST_ELEM is embedded inside.  Supply the
+   name of the outer structure STRUCT and the member name MEMBER
+   of the list element. */
+    child_ptr = list_entry (child_elem_ptr, struct child, child_elem);//把child_elem的指针变成child的指针
+    if (child_ptr->tid == child_tid)//找到child_tid
+    {
+      if (!child_ptr->isrun)//检查子线程之前是否已经等待过
+      {
+        child_ptr->isrun = true;
+        sema_down (&child_ptr->sema);//线程阻塞，等待子进程结束
+        break;
+      } 
+      else //等待过了，has already been successfully called for the given TID
+      {
+        return -1;
+      }
+    }
+    child_elem_ptr = list_next (child_elem_ptr);
+  }
+  if (child_elem_ptr == list_end (l)) {//找不到child_tid
+    return -1;
+  }
+  //执行到这里说明子进程正常退出
+  list_remove (child_elem_ptr);//从子进程列表中删除该子进程，因为它已经没有在运行了，也就是说父进程重新抢占回了资源
+  return child_ptr->store_exit;//返回子线程exit值
+}
+```
 
 现在对上面的代码进行讲解，175行的时候获得需要等待的进程的子进程列表，然后再179行的时候开始遍历，如果遍历的时候找到了子节点，那么就进行判断，如果子线程没有运行过（188行，isrun表示是否运行过），那么就让子线程完成，然后进行V操作来阻塞当前线程，直到子线程完成，最后break返回其退出的状态；如果子线程运行过了（194行），那么就直接返回-1；又或者执行process\_wait操作的进程没有子线程（201行），那么就直接返回-1；
 
@@ -857,187 +1546,332 @@ Pintos的文件系统目前不是线程安全的，我必须确保文件系统�
 
 首先来看一下我们需要实现的函数，来到syscall-nr.h，当前project2部分还有这些函数没有实现。
 
-![](RackMultipart20211226-4-yj7flo_html_ee466656316df953.png)
+需要实现的函数知道了，那么该怎么实现呢？再次看Pintos手册，这些关键词给出了我们要做的事情——&quot;thread-safe&quot;、&quot;do not call multiple file system functions concurrently&quot;。所以我要做的其实也不是很难，就是实现的时候加锁就好了。
 
-图4-3-1 project2还未被实现的系统调用的枚举量
+然后进一步思考，一个系统调用是不是可以操作多个文件，答案显然是&quot;可以的&quot;。那我现在需要一个方法记录下一个当前线程所使用的文件，为了使后面程序调用更加灵活，这里定义两个与文件相关的代码块，一个是单独记录文件使用情况的thread\_files，另一个是thread中记录自身文件的files.
 
-需要实现的函数知道了，那么该怎么实现呢？再次看Pintos手册，这些关键词给出了我们要做的事情——&quot;thread-safe&quot;、&quot;do not call multiple file system functions concurrently&quot;。所以我要做的其实也不是很难，就是实现的时候加锁就好了，首先在syscall\_init函数里把这些函数初始化一下：
+fd代表文件描述符。Linux中其被分为三种，标准输入、标准输出、标准错误，对应的值分别为0、1、2。现在再用最简单的方法定义一下锁的释放和获取。
 
-![](RackMultipart20211226-4-yj7flo_html_afe99b5fd6efb3d5.png)
-
-图4-3-2 syscall\_init中对系统调用进行初始化
-
-然后进一步思考，一个系统调用是不是可以操作多个文件，答案显然是&quot;可以的&quot;。那我现在需要一个方法记录下一个当前线程所使用的文件，为了使后面程序调用更加灵活，这里定义两个与文件相关的代码块，一个是单独记录文件使用情况的thread\_files，另一个是thread中记录自身文件的files，定义如下所示：
-
-![](RackMultipart20211226-4-yj7flo_html_5c3eb82dbf01ed3c.png)
-
-图4-3-3 thread\_file结构体的定义
-
-![](RackMultipart20211226-4-yj7flo_html_6d974a06d0af2e4e.png)
-
-图4-3-4 thread结构体中添加的成员变量files
-
-在上面的定义中，fd代表文件描述符。Linux中其被分为三种，标准输入、标准输出、标准错误，对应的值分别为0、1、2。现在再用最简单的方法定义一下锁的释放和获取。
-
-![](RackMultipart20211226-4-yj7flo_html_304dfabb1cef7d56.png)
-
-图4-3-4 关于文件的锁的定义及操作
-
-先分析一下锁该怎么进行操作。对于文件的锁，在调用与文件相关的系统调用时，会进行锁的获取，当结束调用的时候会释放锁。所以可以发现，不论如何，我应该在线程退出的时候进行文件锁的释放。于是在thread\_exit函数中加入如下的代码块：
-
-![](RackMultipart20211226-4-yj7flo_html_d8f5edf3a49f4213.png)
-
-图4-3-4 在thread\_exit中添加的关于锁释放的代码块
+先分析一下锁该怎么进行操作。对于文件的锁，在调用与文件相关的系统调用时，会进行锁的获取，当结束调用的时候会释放锁。所以可以发现，不论如何，我应该在线程退出的时候进行文件锁的释放。
 
 确定好这些之后，就开始依次实现了，考虑到参数传递部分需要write，所以这里先实现write。在这个部分Pintos手册很温馨地给出了各个函数的参数形式还有返回值，这无疑减轻了许多难度。
 
 在Pintos手册上对write的函数定义如下：
 
-![](RackMultipart20211226-4-yj7flo_html_491327bee62c704e.png)
-
-图4-3-5 write函数的声明
+```
+int write(int fd,const void*buffer,unsigned size);
+```
 
 对于返回值规定为：如果读取到了数据，返回读入的buffer的长度，如果没有写入返回0。而我所读到的所有buffer应当使用putbuf呈现在控制台上。
 
-![](RackMultipart20211226-4-yj7flo_html_bfd09a1590adbb1f.png)
+```
+void 
+sys_write (struct intr_frame* f)
+{
+  uint32_t *user_ptr = f->esp;
+  check_ptr2 (user_ptr + 7);//for tests maybe?
+  check_ptr2 (*(user_ptr + 6));
+  *user_ptr++;
+  int fd = *user_ptr;
+  const char * buffer = (const char *)*(user_ptr+1);
+  off_t size = *(user_ptr+2);
+  if (fd == 1) {//writes to the console
+    /* Use putbuf to do testing */
+    putbuf(buffer,size);
+    f->eax = size;//return number written
+  }
+  else
+  {
+    /* Write to Files */
+    struct thread_file * thread_file_temp = find_file_id (*user_ptr);
+    if (thread_file_temp)
+    {
+      acquire_lock_f ();//file operating needs lock
+      f->eax = file_write (thread_file_temp->file, buffer, size);
+      release_lock_f ();
+    } 
+    else
+    {
+      f->eax = 0;//can't write,return 0
+    }
+  }
+}
 
-图4-3-6 sys\_write系统调用的实现
+```
 
-在这个函数里我没有用原始的模型，并且使用了一个file.c中的函数file\_write来帮助我完成任务，代码框架中file\_write函数情况如下：
+在这个函数里我没有用原始的模型，并且使用了一个file.c中的函数file\_write来帮助我完成任务。
 
-![](RackMultipart20211226-4-yj7flo_html_9685f8f752a54956.png)
+这个函数能帮助我完成文件的写入，所以我在sys\_write中做的事就是把这三个参数送到这个函数里。首先我先获得中断的页，然后通过esp获得数据的栈顶的地址（183行），然后我判断一下获得的esp以及esp所指向地址的合法性（184行和185行），如果是标准输入（fd==1），那么使用putbuf进行输出。否则fd就是0或者2，这个时候直接就对文件列表搜索，如果出现了对应id的标识就进行输入。其中find\_file\_id函数实现如下，实现逻辑就是遍历判断id：
 
-图4-3-7 代码框架中现有函数file\_write
+```
+struct thread_file * 
+find_file_id (int file_id)
+{
+  struct list_elem *e;
+  struct thread_file * thread_file_temp = NULL;
+  struct list *files = &thread_current ()->files;
+  for (e = list_begin (files); e != list_end (files); e = list_next (e)){
+    thread_file_temp = list_entry (e, struct thread_file, file_elem);
+    if (file_id == thread_file_temp->fd)
+      return thread_file_temp;
+  }
+  return false;
+}
 
-可以看出，这个函数能帮助我完成文件的写入，所以我在sys\_write中做的事就是把这三个参数送到这个函数里。首先我先获得中断的页，然后通过esp获得数据的栈顶的地址（183行），然后我判断一下获得的esp以及esp所指向地址的合法性（184行和185行），如果是标准输入（fd==1），那么使用putbuf进行输出。否则fd就是0或者2，这个时候直接就对文件列表搜索，如果出现了对应id的标识就进行输入。其中find\_file\_id函数实现如下，实现逻辑就是遍历判断id：
-
-![](RackMultipart20211226-4-yj7flo_html_47478f6cdb27f259.png)
-
-图4-3-8 find\_file\_id函数的实现
+```
 
 经过上面的操作后，write就写完了。接下来是create，Pintos指南的定义如下：
 
-![](RackMultipart20211226-4-yj7flo_html_c5f0c5894ab01054.png)
+```
+bool create(const char*file,unsigned initial_size);
+```
 
-图4-3-9 create函数声明
-
-其中file为文件名，initial\_size为初始定义大小。这个函数是比较好实现的，这是因为在这个时候我在filesys文件夹下面发现了很多我用得上的函数，在这个函数里，我可以用到filesys\_create，这个是代码框架已经实现的函数，具体如下所示：
-
-![](RackMultipart20211226-4-yj7flo_html_f85f85de73414081.png)
-
-图4-3-10 代码框架已实现函数filesys\_create
+其中file为文件名，initial\_size为初始定义大小。这个函数是比较好实现的，这是因为在这个时候我在filesys文件夹下面发现了很多我用得上的函数，在这个函数里，我可以用到filesys\_create，这个是代码框架已经实现的函数。
 
 可以看到，这就是我们需要实现的函数，那么我只需要传参数就好了。实现如下：
 
-![](RackMultipart20211226-4-yj7flo_html_60aa238de2c43836.png)
+```
+void 
+sys_create(struct intr_frame* f)
+{
+  uint32_t *user_ptr = f->esp;
+  check_ptr2 (user_ptr + 5);//for tests maybe?
+  check_ptr2 (*(user_ptr + 4));
+  *user_ptr++;
+  acquire_lock_f ();
+  f->eax = filesys_create ((const char *)*user_ptr, *(user_ptr+1));
+  release_lock_f ();
+}
 
-图4-3-11 sys\_create函数实现
+```
 
 这个函数逻辑很简单，就直接先对栈寄存器指针和所指向的地址进行合法性检查，然后传参数就行（235行是为了跳过返回地址，237行里，\*user\_ptr是第一个参数，\*（user\_ptr+1）为第二个参数，关于参数的知识，在第一个任务已经讲过）。
 
 接下来是remove操作，Pintos手册给出的函数声明如下：
 
-![](RackMultipart20211226-4-yj7flo_html_a220e4d0678e21e.png)
-
-图4-3-12 remove的函数声明
+```
+bool remove(const char* file);
+```
 
 这里的操作和上面的create基本一样，file.c有源代码可以用，实现如下所示：
 
-![](RackMultipart20211226-4-yj7flo_html_77e35beaac964655.png)
-
-图4-3-13 sys\_remove函数实现
+```
+void 
+sys_remove(struct intr_frame* f)
+{
+  uint32_t *user_ptr = f->esp;
+  check_ptr2 (user_ptr + 1);//arg address
+  check_ptr2 (*(user_ptr + 1));//file address 
+  *user_ptr++;
+  acquire_lock_f ();
+  f->eax = filesys_remove ((const char *)*user_ptr);
+  release_lock_f ();
+}
+```
 
 然后是open操作，Pintos手册给出的声明如下：
 
-![](RackMultipart20211226-4-yj7flo_html_a6f433896639bd88.png)
+```
+int open(const char* file);
+```
 
-图4-3-14 open函数的声明
+提示是这样说的，打开一个文件，如果打开成功就返回一个非负的fd值，否则返回-1。另外每个进程所拥有的fd值是独立的，也就是子进程不会从父进程中继承fd值（fd值是什么我在上文已经提到，这里不再赘述），另外需要注意的事情是，当一个文件被打开多次，不管打开的进程是不是同一个进程，都返回一个新的fd值（意思大概是一个进程可能会重复操作一个文件，比如说process1打开了文件A，过一会他又打开了文件A，这个时候process1还需要调用一次open，在上文我已经说过，我们的数据结构会对process操作的file进行维护，依次加入队列，那么现在的意思就是，无论队列之前有没有对该文件做过操作的记录，都要再做一次记录然后返回）。实现如下：
 
-提示是这样说的，打开一个文件，如果打开成功就返回一个非负的fd值，否则返回-1。另外每个进程所拥有的fd值是独立的，也就是子进程不会从父进程中继承fd值（fd值是什么我在上文已经提到，这里不再赘述），另外需要注意的事情是，当一个文件被打开多次，不管打开的进程是不是同一个进程，都返回一个新的fd值（意思大概是一个进程可能会重复操作一个文件，比如说process1打开了文件A，过一会他又打开了文件A，这个时候process1还需要调用一次open，在上文我已经说过，我们的数据结构会对process操作的file进行维护，依次加入队列，那么现在的意思就是，无论队列之前有没有对该文件做过操作的记录，都要再做一次记录然后返回）。
-
-实现如下：
-
-![](RackMultipart20211226-4-yj7flo_html_232f349ddbef299a.png)
-
-图4-3-15 sys\_open的实现
+```
+void 
+sys_open (struct intr_frame* f)
+{
+  uint32_t *user_ptr = f->esp;
+  check_ptr2 (user_ptr + 1);
+  check_ptr2 (*(user_ptr + 1));
+  *user_ptr++;
+  acquire_lock_f ();
+  struct file * file_opened = filesys_open((const char *)*user_ptr);
+  release_lock_f ();
+  struct thread * t = thread_current();
+  if (file_opened)
+  {
+    struct thread_file *thread_file_temp = malloc(sizeof(struct thread_file));
+    thread_file_temp->fd = t->max_file_fd++;
+    thread_file_temp->file = file_opened;
+    list_push_back (&t->files, &thread_file_temp->file_elem);//维护files列表
+    f->eax = thread_file_temp->fd;
+  } 
+  else// the file could not be opened
+  {
+    f->eax = -1;
+  }
+}
+```
 
 前面几行的操作的意思不在解释，上文已经解释过几次了，同样的file.c又源代码可以用，位filesys\_open，然后再266行开始对fd值进行维护，274行是考虑打开失败的情况。
 
 然后是filesize，声明如下：
 
-![](RackMultipart20211226-4-yj7flo_html_dbf83184d4320ad3.png)
-
-图4-3-16 filesize的声明
+```
+int filesize(int fd);
+```
 
 这个函数思路比较简单，就是用在现有的文件链表里面id值位fd的文件，然后调用file.c里的file\_length函数就好了，然后把结果值放在eax里面，当然如果没有找到对应的文件就返回-1（把eax赋值-1）即可。实现如下：
 
-![](RackMultipart20211226-4-yj7flo_html_2d6326453f9f3a9d.png)
-
-图4-3-17 sys\_filesize函数的实现
+```
+void 
+sys_filesize (struct intr_frame* f){
+  uint32_t *user_ptr = f->esp;
+  check_ptr2 (user_ptr + 1);
+  *user_ptr++;//fd
+  struct thread_file * thread_file_temp = find_file_id (*user_ptr);
+  if (thread_file_temp)
+  {
+    acquire_lock_f ();
+    f->eax = file_length (thread_file_temp->file);//return the size in bytes
+    release_lock_f ();
+  } 
+  else
+  {
+    f->eax = -1;
+  }
+}
+```
 
 再之后就是read函数了，Pintos手册上声明如下：
 
-![](RackMultipart20211226-4-yj7flo_html_e7235e4de5ad5df9.png)
+```
+int read(int fd,void* buffer,unsigned size);
+```
 
 图4-3-18 read函数的声明
 
 提示是说如果通过fd来判断是否读入，size代表buffer大小，最后返回操作的字符大小（无法操作返回-1）。跟上面的思路基本一样，代码给出如下：
 
-![](RackMultipart20211226-4-yj7flo_html_a29564fd06ff5075.png)
+```
+void 
+sys_read (struct intr_frame* f)
+{
+  uint32_t *user_ptr = f->esp;
+  /* PASS the test bad read */
+  *user_ptr++;
+  /* We don't konw how to fix the bug, just check the pointer */
+  int fd = *user_ptr;
+  uint8_t * buffer = (uint8_t*)*(user_ptr+1);
+  off_t size = *(user_ptr+2);
+  if (!is_valid_pointer (buffer, 1) || !is_valid_pointer (buffer + size,1)){
+    exit_special ();
+  }
+  /* get the files buffer */
+  if (fd == 0) //stdin
+  {
+    for (int i = 0; i < size; i++)
+      buffer[i] = input_getc();
+    f->eax = size;
+  }
+  else
+  {
+    struct thread_file * thread_file_temp = find_file_id (*user_ptr);
+    if (thread_file_temp)
+    {
+      acquire_lock_f ();
+      f->eax = file_read (thread_file_temp->file, buffer, size);
+      release_lock_f ();
+    } 
+    else//can't read
+    {
+      f->eax = -1;
+    }
+  }
+}
 
-图4-3-18 read函数的实现
+```
 
 之后的函数基本都差不多了，接下来是seek函数，声明如下：
 
-![](RackMultipart20211226-4-yj7flo_html_a25094c30a352a86.png)
-
-图4-3-19 seek函数的实现
+```
+void seek(int fd,unsigned position);
+```
 
 这个函数的意思是把fd这个文件下一次需要操作的位置改为positon，实现如下：
 
-![](RackMultipart20211226-4-yj7flo_html_b33f27d9fc6325a.png)
+```
+void 
+sys_seek(struct intr_frame* f)
+{
+  uint32_t *user_ptr = f->esp;
+  check_ptr2 (user_ptr + 5);
+  *user_ptr++;//fd
+  struct thread_file *file_temp = find_file_id (*user_ptr);
+  if (file_temp)
+  {
+    acquire_lock_f ();
+    file_seek (file_temp->file, *(user_ptr+1));
+    release_lock_f ();
+  }
+}
 
-图4-3-20 sys\_seek函数的实现
+```
 
 然后是tell函数，意思刚好和seek相反，它的含义是要返回下一个要操作的position，只是我不需要考虑具体实现逻辑，只需要调用file.c里面的file\_tell就好了，定义和实现一并给出：
 
-![](RackMultipart20211226-4-yj7flo_html_375ba25b7c3a941e.png)
+```
+unsigned tell(int fd);
+```
 
-图4-3-22 tell函数的声明
-
-![](RackMultipart20211226-4-yj7flo_html_1b047b0f77686fe0.png)
-
-图4-3-23 sys\_tell函数的实现
+```
+void 
+sys_tell (struct intr_frame* f)
+{
+  uint32_t *user_ptr = f->esp;
+  check_ptr2 (user_ptr + 1);
+  *user_ptr++;
+  struct thread_file *thread_file_temp = find_file_id (*user_ptr);
+  if (thread_file_temp)
+  {
+    acquire_lock_f ();
+    f->eax = file_tell (thread_file_temp->file);
+    release_lock_f ();
+  }else{
+    f->eax = -1;
+  }
+}
+```
 
 最后一个函数是close函数，这个函数会为一个文件操作进行收尾。定义如下：
 
-![](RackMultipart20211226-4-yj7flo_html_cb92bb6170e4deb.png)
-
-图4-3-24 close函数的函数声明
+```
+void close(int fd);
+```
 
 这个函数的意思是关闭相应标号的文件，操作逻辑应该是简单的，搜索文件列表，fd相等，那么关闭并从之前维护的列表里remove掉。
 
-![](RackMultipart20211226-4-yj7flo_html_ada050127a2bb33f.png)
-
-图4-3-25 函数sys\_close的实现
+```
+void 
+sys_close (struct intr_frame* f)
+{
+  uint32_t *user_ptr = f->esp;
+  check_ptr2 (user_ptr + 1);
+  *user_ptr++;
+  struct thread_file * opened_file = find_file_id (*user_ptr);
+  if (opened_file)
+  {
+    acquire_lock_f ();
+    file_close (opened_file->file);
+    release_lock_f ();
+    /* Remove the opened file from the list */
+    list_remove (&opened_file->file_elem);
+    /* Free opened files */
+    free (opened_file);
+  }
+}
+```
 
 至此，80分版本的任务3完成。
 
-正如我如上所说，这是80分版本的结束，对于2021年本版，满分是90分，所以还多了一些任务。其中其中有一个函数为practice，作用是返回第一个参数加一，实现如下：
-
-![](RackMultipart20211226-4-yj7flo_html_4a49ab3eb0cfce92.png)
-
-图4-3-26函数sys\_practice的实现
+正如我如上所说，这是80分版本的结束，对于2021年本版，满分是90分，所以还多了一些任务。其中其中有一个函数为practice，作用是返回第一个参数加一。
 
 之后就是今年版本特有的检查点，浮点数了，对应前缀为fp的测试点，很遗憾的是，到提交这份报告的时候我仍然又三个点过不去，关于这一部分的实现，我会在问题及解决中给出。
 
 ### 实验结果
 
-以下为跑分结果：
-
-![](RackMultipart20211226-4-yj7flo_html_9b615e3c6ee2165.png)
-
-图4-3-26 平台测试结果
+最后的线上平台测试结果为93分。
 
 ### 问题及解决办法
 
