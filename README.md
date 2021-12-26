@@ -126,7 +126,6 @@
 
 配置好环境之后进入vagrant用户下面的personal文件夹，编译文件然后运行shell文件即可。运行情况如下：
 
-![](RackMultipart20211226-4-yj7flo_html_1ff62b3a0c00f5d8.png)
 
 图2-1-1 启动任务
 
@@ -138,19 +137,16 @@
 
 首先我查看了shell文件下面的函数，找到了已经实现了的exit和help的shell命令，于是按照格式申明了cd和pwd的函数原型
 
-![](RackMultipart20211226-4-yj7flo_html_a27a0cb141ae00c4.png)
 
 图2-2-1 提供的函数申明
 
 进一步的，我对help函数要打印的table内容进行了修改，如下所示：
 
-![](RackMultipart20211226-4-yj7flo_html_a78b494b6e8ff7db.png)
 
 图2-2-2 help函数中的table
 
 之后进入shell，执行help命令，执行情况如下：
 
-![](RackMultipart20211226-4-yj7flo_html_5b8d274be2bf88a3.png)
 
 图2-2-3 help命令的使用
 
