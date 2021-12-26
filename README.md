@@ -16,27 +16,28 @@
 
 ## 目录
 
+@[toc]
 ## 第一章 实验项目介绍
 
-[第二章 简单](#_Toc91323662)shell实现 5
+## 第二章 简单shell实现 
 
-[1、启动任务(getting started) 5](#_Toc91323663)
+### 1、启动任务(getting started) 
 
-[2、cd 与 pwd的实现(Add support for cd and pwd) 5](#_Toc91323664)
+### 2、cd 与 pwd的实现(Add support for cd and pwd)
 
-[cd的实现 6](#_Toc91323665)
+#### cd的实现 
 
-[pwd的实现 7](#_Toc91323666)
+#### pwd的实现
 
-[3、程序执行(Program execution) 8](#_Toc91323667)
+### 3、程序执行(Program execution)
 
-[4、路径解析(Path resolution) 11](#_Toc91323668)
+### 4、路径解析(Path resolution)
 
-[5、输入输出的重定向(Input/Output Redirection) 12](#_Toc91323669)
+### 5、输入输出的重定向(Input/Output Redirection)
 
-[6、信号控制(Signal Handling and Terminal Control) 12](#_Toc91323670)
+### 6、信号控制(Signal Handling and Terminal Control)
 
-[7、问题及解决办法 12](#_Toc91323671)
+### 7、问题及解决办法
 
 [第三章 线程管理](#_Toc91323672) 13
 
@@ -114,7 +115,7 @@
 
 [第六章 总结及展望](#_Toc91323709) 56
 
-@[toc]( 第一章 实验项目介绍)
+## 第一章 实验项目介绍
 
 本章主要介绍实验项目的总体要求、实验环境配置步骤、以及在实验环境配置中遇到的主要问题及解决办法。
 
