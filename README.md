@@ -1,26 +1,65 @@
-#Pintos课程报告
-## 介绍
-本文档来自于我2021年操作系统课的课程设计中的报告文档，该文档的标准是按照学校要求来的。实现了CS-162 2021fall 的hw2-shell（这个部分不提供源代码）还有团队作业部分的project1（userprog）和project2(scheduling)，因为环境配置的问题，本项目采用的代码框架是pintos-anon-master，为了适配2021年的新框架，我修改了测试集，所以这个仓库中的内容不一定适用于你的在线判题机器，仅供参考。
-
-本文档是由word版本修改而来的课程报告，所以由一些地方可能会出现于word文档不符的情况，word文档会导出成pdf上传至该项目，方便后来者学习。
-
-如果这个仓库对你有所帮助，那我将感到高兴，如果你在执行过程中遇到不能解决的问题，你可以在issues直接提问，我每天都会定期查看。
+# 操作系统课程设计报告
 
 **2020-2021**
 
+**供学弟学妹们参考**
+
+## 前言
+
+* 预备的基础知识： C、Linux(基本的界面操作以及命令行语句)
+* 结合本报告学习的用时估计 hw2-三到四天 scheduling-一周 userprog-一周（这一部分建议再看一下别的参考资料，特别是四位对其和压栈的逻辑） 
+
+这是我们学校2021年秋季的操作系统课程设计，使用的是伯克利CS162的Pintos框架。今年的pintos和往年相比有很大的变化，往年的project2有80个测试点，今年加到了96个，这是因为增加了FPU内容。另外，市面上的Pintos手册的版本也属于层次不齐，所以如果你想做这个东西的话，最好先了解一下做什么版本，2020年前的版本基本没什么变化，市面上的教程也基本都是针对于27（project1）+80（project2）测试点的版本，我使用的是27+80测试点的代码框架，但是后面把测试集更改成了27+96版本的测试集。最后的结果是project1 27pass，project2 93pass。最开始的文档我使用word写的，所以md文档有些地方可能不太清楚，如果没太明白可以再看一下我的pdf文件。这个东西前后做了有将近两个月，参考了市面上能找到的所有中文教程（主要是没有找到英文的教程）。如果出现问题，欢迎再issue下面提问。
+
+* 注意：
+* 本文档及代码仅供学习参考，严禁进行商业交易！！  
+* 如果有学弟学妹看到了这个报告，希望也不要简单的贴代码，至少按着流程走一遍！！
+
 ## 第一章 实验项目介绍
 
-本章主要介绍实验项目的总体要求、实验环境配置步骤、以及在实验环境配置中遇到的主要问题及解决办法。
+### 总体要求
+
+对于学校要求，我需要至少完成hw-shell、scheduling的task1、task2，后面的部分是选做。
+
+### 实验环境配置步骤
+
+Pintos的安装我是按照网上的教程进行的。步骤如下：
+- 1、首先进入virtualBox官网https://www.virtualbox.org/，点击Downloads选项。
+- 2、然后选择需要的版本进行下载，然后安装即可。
+- 3、然后来到https://ubuntu.com/download/desktop进行Ubuntu的下载。
+- 4、紧接着搜索18.04，点击相应版本进行下载。
+- 5、下载后进行虚拟机安装，这部分可以参考网上Ubuntu安装方法。
+- 6、接下来进行pintos安装，首先来到pintos官网，下载网址如下
+https://pintos-os.org/cgi-bin/gitweb.cgi?p=pintos-anon;a=tree;h=refs/heads/master;hb=refs/heads/master
+- 7、然后点击snapshot，进行下载。
+- 8、然后再虚拟机桌面将压缩包解压，之后需要进行路径的修改，确保pintos能在虚拟机上启动。
+- 9、我参考了这个帖子：https://blog.csdn.net/geeeeeker/article/details/108104466，首先在命令行中输入sudo apt-get install qemu
+- 10、然后进入pintos里的/utils/pintos-gdb，把pintos完整路径给GDBMARCRO。
+- 11、把Makefile文件中LAODLIBES改为LDLBIS。
+-	12、这个时候在utils文件夹中使用make命令。
+-	13、然后编辑/src/threads/Make.vars中把7行的bochs改为qemu。
+-	14、在/utils/pintos中把103行bochs改为qemu，257行kernel.bin改成完整路径，621行改为qemu-system-x86_64
+-	15、然后在/utils/Pintos.pm中把loader.bin改为它的完整路径。
+-	16、在终端输入source ~/.bashrc运行。
+	至此，project部分的配置完成。
+	对于shell部分，可以在直接在berkeley的github上进行创建地址如下：https://github.com/Berkeley-CS162/vagrant/
+
+### 问题及解决方法
+
+这里简要说一下做project1和project2的时候出现的问题。
+在做project1的时候，一开始出现了booting not properly的输出，原因是因为pintos虚拟机没有跑起来，如果遇到了这种情况，很大的几率是本地的环境配置没写对。然后我上了YouTube看了一位主播的教程，然后按照我如上的方式完成了配置。
+
+在做project2的时候，我再次出现了这种情况，解决办法是把userprog文档下的makefile.var修改掉。在我最后合并project1和2的时候，我发现utils目录下面的pintos和Pintos.pm文件里面的loader和kernel部分的路径变量不需要写死，不然会出现一个project跑不了，另一个却能跑的情况。这个地方我有点忘记之前是怎么更改utils的了，反正如果你做到了project2的时候，注意一下这点就行。
 
 ## 第二章 简单shell实现
 
 本章时Pintos项目中的一个个人作业，相比于之后的project来讲比较简单，特别是做完project2后在会过来看shell这个作业就觉得时很容易的，这一部分我是按照Pintos手册里面所给的顺序进行完成的，所以每个部分的名字也是Pintos手册的任务名。在这个作业里，我的任务就是利用现有的接口来实现一个shell的程序，主要的任务就是读取命令行，然后做相关的操作。
 
-## 1、启动任务(getting started)
+### 1、启动任务(getting started)
 
 配置好环境之后进入vagrant用户下面的personal文件夹，编译文件然后运行shell文件即可。
 
-## 2、cd 与 pwd的实现(Add support for cd and pwd)
+### 2、cd 与 pwd的实现(Add support for cd and pwd)
 
 要求：pwd打印当前的工作路径，cd用来改变工作路径
 
@@ -49,19 +88,47 @@ fun_desc_t cmd_table[] = {
 
 之后进入shell，执行help命令。可以看到help指令被正确地打印了出来。接下来该实现cd和pwd函数了。
 
-### cd的实现
+#### cd的实现
 
 观察main函数发现，shell会不停地扫描行输入，然后得到token，如果该token在命令表里面，则进入该函数。
 
 在tokenizer.h文件里面我看到了需要的函数tokens\_get\_token，我可以通过这个函数拿到第一个token，然后来记录路径目标。实现请参考源代码cmd_cd函数部分。
 
-思路：这里的实现中有这样几个原则，只识别一个token，当出现多个token（词组）的时候，就认定语法错误，当无输入，则进入home目录下的主文件，当只有一个token，则调用chdir函数进行path的变换，如果失败则返回-1并给出提示。
+思路：这里的实现中有这样几个原则，只识别一个token，当出现多个token（词组）的时候，就认定语法错误，当无输入或者输入为'~'，则进入home目录下的主文件，当只有一个token，则调用chdir函数进行path的变换，如果失败则返回-1并给出提示。实现如下：
 
-### pwd的实现
+```
+int cmd_cd(struct tokens *tokens) {
+  char *targ_dir = tokens_get_token(tokens, 1);
+  if (targ_dir == NULL || strcmp(targ_dir, "~") == 0) {
+    targ_dir = getenv("HOME");
+    if (targ_dir == NULL) {
+      printf("Error changing directory\n");
+      return -1;
+    }
+  }
+  int success = chdir(targ_dir);
+  if (success == -1) {
+    printf("Error changing directory\n");
+  }
+  return success;
+}
+```
 
-pwd的实现很简单，只需要使用getcwd进行一下路径的获取，然后输出结果就好了，但是有一点容易被忘记，就是getcwd返回的是一个malloc得来的值，所以需要手动释放内存。
+#### pwd的实现
 
-## 3、程序执行(Program execution)
+pwd的实现很简单，只需要使用getcwd进行一下路径的获取，然后输出结果就好了，但是有一点容易被忘记，就是getcwd返回的是一个malloc得来的值，所以需要手动释放内存。实现如下：
+```
+int cmd_pwd(unused struct tokens *tokens) {
+  char cur_dir[4096];
+  if (getcwd(cur_dir, 4096) == NULL) {
+    printf("Error printing current directory\n");
+  }
+  printf("%s\n", cur_dir);
+  return 1;
+}
+```
+
+### 3、程序执行(Program execution)
 
 题目要求不能使用execvp，并且希望最终运行格式为：/usr/bin/wc shell.c
 
@@ -76,12 +143,10 @@ execv和execvp的作用均是执行文件，但是execvp的参数是一根文件
 这里需要注意的事情是，execv中，arg参数的填写应当包含路径在内的所有token。
 我用函数parse\_arg来进行token的拆解。
 
-接下来就是运行程序的函数了，主要思路就是拆分token然后调用fork，如果fork调用成功，那么调用execv来执行程序，代码如下：
-
-再次编译程序，运行结果如下：
+接下来就是运行程序的函数了，主要思路就是拆分token然后调用fork，如果fork调用成功，那么调用execv来执行程序。
 
 
-## 4、路径解析(Path resolution)
+### 4、路径解析(Path resolution)
 
 文档中接下来引出了一个问题，如果我每次都要写完整路径的话，这将是非常繁琐的，所以我需要想个办法帮我获取完整的路径来执行文件。这个题目依旧是不允许使用execvp的，因为使用了，这道题目就完全没有了意义。另外，为了判断用户输入的是否已经是完整路径，我使用了access函数，这个函数将会在用户输入完整路径时返回-1。
 
@@ -89,23 +154,99 @@ execv和execvp的作用均是执行文件，但是execvp的参数是一根文件
 
 我用这个函数替换了在run\_program里面出现的execv函数，这下我可以直接写文件名来进行任务的执行了。
 
-## 5、输入输出的重定向(Input/Output Redirection)
+### 5、输入输出的重定向(Input/Output Redirection)
 
-## 6 、信号控制(Signal Handling and Terminal Control)
 
-## 7、问题及解决办法
+输入输出型号的格式在Pintos手册中已经给出，所以我只需要检查是否有'<'或者'>'，然后定义是输入还是输出流。Pintos手册上不要求我们对'>>'或者'<<'进行实现，这就降低了一些难度，那么现在有做的事情就是读入一个"[process] > [file]"格式的的命令行，然后进行执行就好了。
+重定向可以单独做一个函数，如下所示：
+```
+int redirect(int old_fd, int new_fd) {
+  /*equal to IF FD IS VALID->COPY->CLOSE*/
+  if (old_fd == -1 || dup2(old_fd, new_fd) == -1 || close(old_fd) == -1) {
+    return -1;
+  }
+  return 1;
+}
+```
+然后再在主函数里面进行判断，如下所示(判断部分代码)：
+```
+if (redirect_stdin) {
+        int fd = open(token, O_RDONLY);
+        if (redirect(fd, STDIN_FILENO) == -1) {
+          printf("Error with input %s\n", token);
+          exit(-1);
+        }
+        redirect_stdin = 0;
+      } else if (redirect_stdout) {
+        int fd = creat(token, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH);
+        if (redirect(fd, STDOUT_FILENO) == -1) {
+          printf("Error with input %s\n", token);
+          exit(-1);
+        }
+        redirect_stdout = 0;
+      } else if (strcmp(token, "<") == 0) {
+        redirect_stdin = 1;
+      } else if (strcmp(token, ">") == 0) {
+        redirect_stdout = 1;
+      }
+```
 
-因为Shell部分并不需要进行特别的环境变量的配置，所以做这个作业的时候并没有特别多的问题，唯一遇到的问题就是，刚做这个作业的时候，对Linux还不是很熟，导致ls、pwd这样的命令对我来说很陌生。解决办法就是读Pintos手册，但是相较于后面project的描述，这一部分的手册的内容就显得很少了，所以我也上网进行了Linux相关知识的学习。
+### 6 、信号控制(Signal Handling and Terminal Control)
+
+大多数shell都可以让我们停止或者暂停进程，这是因为有特殊的token流，比如说Ctrl-C或者是Ctrl-Z，通过发送信号给shell的子进程来完成这些操作。接下来是一些基本的概念。
+
+#### 6.1、进程组(Process groups)
+
+每个进程都有自己的PID，每个进程也有自己的进程组ID，也叫做PGID。一般来讲，父进程一样的进程之间有相同的PGID，我们可以用getpgid、setpgid、getpgrp等函数来对id进行操作。
+注意，当你每次吧一个子进程移动到一个进程组的时候，PGID应该等于PID。
+
+#### 6.2、前台终止(Foreground terminal)
+
+每个终端都有一个前台进程的组ID，当你用CRTL-C，你的终端会给每一个前台的进程组中的进程发送信号。这里，你可以使用终端命令tcsetpgrp，对于标准输入，参数fd应该为0.
+
+#### 6.3、信号概要(Overview of signals)
+
+这里有一些定义了的信号(这里的信号的具体介绍不进行赘述)：SIGINT、SIGQUIT、SIGKILL、SIGTERM、SIGTSTP、SIGCONT、SIGTTIN。
+
+#### 6.4、任务(Task)
+
+我的任务是确保每个程序在开始的时候都有它自己的进程组，当我开始一个进程的时候，进程组应该在前台，结束信号量只能影响前台的程序，而不是后台的shell。
+实现如下：
+```
+    for (int i = 0; i < sizeof(ignore_signals) / sizeof(int); i++) {
+      signal(ignore_signals[i], SIG_DFL);
+    }
+```
+
+### 7、后台运行(Background processing)
+
+当命令行最后有'&'符号的时候，我需要将这个程序放在后台操作。我需要加一个内置的命令wait，函数会等待直到所有的后台工作全部完成。
+这个实现是比较简单的，就直接在每句话的最后加一个检测'&'的判断就行，判断如下：
+```
+int run_bg = length > 1 && strcmp(tokens_get_token(tokens, length - 1), "&") == 0;
+```
+可以看到，有两个约束，一个是命令长度要大于1，然后就是最后的那个token是'&'。
+```
+    if (!run_bg) {
+      // move to foreground if input doesn't end with "&"
+      tcsetpgrp(shell_terminal, getpgrp());
+    }
+```
+如果不是后台，就把他加入前台进程组。
+
+### 8、问题及解决办法
+
+因为Shell部分并不需要进行特别的环境变量的配置，所以做这个作业的时候并没有特别多的问题，唯一遇到的问题就是，刚做这个作业的时候，对Linux还不是很熟，导致ls、pwd这样的命令对我来说很陌生。解决办法就是读Pintos手册，但是相较于后面project的描述，这一部分的手册的内容就显得很少了，不过大部分的只是都能在Linux的书本上找到。 
 
 ## 第三章 线程管理
 
-## Pintos线程管理框架介绍
+### Pintos线程管理框架介绍
 
 pintos已经为我提供了基本的线程创建、操作的接口，在其中包括了内存分配、线程的基本定义、时间片的设置、锁和信号量的设置等。根据pintos手册的提示，我得知在project1部分，我需要进行修改的文件是threads文件夹和device文件夹中的代码。在pintos手册的FAQ部分中我得知，我需要关注的主要是thread.c、thread.h、sysch.c、timer.c、fixed-point.h（当前源码中并没有）部分的代码。
 
 在文档中，已经比较清晰地介绍了当前pintos代码的问题，首先是代码功能是不完整的，具体分为下面三个，这也是之后我需要解决的问题：
 
-1）当前的计时器代码timer.c中关于中断的代码（sleep相关的函数）虽然已经给出，但是它们是用盲等方式实现的，这十分低效，所以我需要对其进行修改，通过时间片来进一步管理线程。
+1）当前的计时器代码timer.c中关于中断的代码（sleep相关的函数）虽然已经给出，但是它们是用忙等方式实现的，这十分低效，所以我需要对其进行修改，通过时间片来进一步管理线程。
 
 2）当前的线程调度是有问题的，在pintos的手册里提出了优先级捐赠这个概念，这点在pintos手册里面有详细地讲解，我会在任务2部分仔细地解释。
 
@@ -113,15 +254,29 @@ pintos已经为我提供了基本的线程创建、操作的接口，在其中�
 
 最后，pintos中的thread是以栈的形式进行存储的，从4KB的栈顶往0KB方向生长，而从0KB开始的部分存储的是内核kernel的相关文件，这也意味着，线程的存储数量是有限的，并且每一个线程的大小也不能特别大，所以像直接申请大数组的操作是绝对不能允许的，这会导致内存溢出从而使内核异常。
 
-## 介绍主要函数的功能及实现流程
+### 介绍主要函数的功能及实现流程
 
-## 任务1：Alarm Clock
+关于三个task，他们的逻辑关系是从忙等到支持抢占，然后到支持优先级赠予的抢占调度，然后到不支持优先级赠予但是支持多级反馈调度的调度。
+	其中抢占实现就是每个规定时间片后检查一下所有进程的优先级，优先级大的放队列前面，变成一个优先队列，然后永远跑第一个进程元素。优先级赠与则是上锁的时候把共享一个锁的一系列进程优先级整体提升，然后重新调度，多级反馈优先级的实现则和上课讲的稍微有一点不一样，上课的时候老师说是建立多个优先级队列，然后当一个进程没有做完就惩罚移动至优先级更低的队列里去，不过Pintos中是直接用公式来对优先级进行刻画，使得优先级慢慢变低。
+	在这个project里，我自己创建的主要的函数有：
+-	Void blocked_thread_check 
+-	Bool thread_cmp_priority 
+-	Void thread_hold_the_lock
+-	Void thread_remove_lock
+-	Void thread_donate_priority
+-	Void thread_donate_update
+-	Void thread_mlfqs_increase_recent_cpu_by_one
+-	Void thread_mlfqs_update_priority
+-	Void thread_mlfqs_update_load_avg_and_recent_cpu
 
-### 任务描述
 
-在device/timer.c中，有一个叫作timer\_sleep()的函数，它的功能是用来对线程中一些需要计时的操作进行处理，但是目前的版本使很低效的，因为它在不停地调用thread\_yeild()函数，直到时间片使用完才会退出（盲等）。我现在的任务是更改这个函数，提高工作效率。
+### 任务1：Alarm Clock
 
-### 实验过程
+#### 任务描述
+
+在device/timer.c中，有一个叫作timer\_sleep()的函数，它的功能是用来对线程中一些需要计时的操作进行处理，但是目前的版本使很低效的，因为它在不停地调用thread\_yeild()函数，直到时间片使用完才会退出（忙等）。我现在的任务是更改这个函数，提高工作效率。
+
+#### 实验过程
 
 从需要修改的代码出发，我先查看了timer\_sleep()，代码如下：
 
@@ -137,9 +292,9 @@ timer_sleep (int64_t ticks)
 }
 ```
 
-可以看到，第4行获取了时间片的数量，94行是断言，确保该线程可以中断，后面是盲等操作。
+可以看到，第4行获取了时间片的数量，94行是断言，确保该线程可以中断，后面是忙等操作。
 
-对于现在的盲等，根据之前学过的知识，我可以使用堵塞来避免这样的操作。那么我的方案是：当一个线程需要进行睡眠的时候，我可以把它放入堵塞队列，并且等待它所睡眠的时间，然后再唤醒它，把他加入就绪队列。
+对于现在的忙等，根据之前学过的知识，我可以使用堵塞来避免这样的操作。那么我的方案是：当一个线程需要进行睡眠的时候，我可以把它放入堵塞队列，并且等待它所睡眠的时间，然后再唤醒它，把他加入就绪队列。
 
 于是我首先需要对thread的结构体进行修改。我在thread结构体里加入了ticks\_blocked，用来记录线程被阻塞的时间片的个数。
 
@@ -215,13 +370,13 @@ timer_interrupt (struct intr_frame *args UNUSED)
 
 至此，任务一结束。
 
-### 问题与解决方法
+#### 问题与解决方法
 
 在完成第一部分的时候，我很长时间都卡在&quot;如何更新堵塞时间片&quot;这个问题上了，解决的办法就是查看pintos的手册以及指南（里面指出很多重要操作会出现在timer\_interrupt函数里面）。这里有个当时一直有误解的地方，就是老师给的指南里面并没有特别多的信息，对这个project描述最多的应该是CS162的那个手册，但是封面的名字应该叫《CS162 Project 2：Scheduling》，Project2误导了我，让我以为里面并没有我需要的东西。可实际上里面把所有的函数和定义讲得都很明白。我想这导致我花了很长时间来找资料读懂代码。
 
-## 任务2：Priority Scheduling（优先级调度）
+### 任务2：Priority Scheduling（优先级调度）
 
-### 任务描述
+#### 任务描述
 
 在Pintos里，每个线程都会有一个优先级（priority value），来对线程进行调度。关于优先级的取值，可以从Pintos的源码中发现，优先级的值域是零到六十三，其中有三个宏定义PRI\_MIN、PRI\_DEFAULT、PRI\_MAX，分别代表0、31、63，优先级从低到高。
 
@@ -233,7 +388,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
 
 在手册里描述了要求完成的优先级捐赠的三个特性，第一个是，捐赠者可以是多个，第二个是，当锁被释放的时候，被捐赠的对象优先级会被还原，第三个是，捐赠是支持递归的。
 
-### 实验过程
+#### 实验过程
 
 在完成这个任务之前，首先我需要先把钱一个任务的最后一个监测点解决掉——alarm-priority。
 
@@ -978,17 +1133,17 @@ sema_up (struct semaphore *sema)
 
 通过上述的改进后，再次尝试，信号量部分也完成了，至此任务二完成。
 
-### 实验结果
+#### 实验结果
 
 这时我进行了一次线上的评分，此时是0分，老师解释，错误数量大于5个不计分。
 
-### 问题与解决方法
+#### 问题与解决方法
 
 在完成这个任务的时候遇到的最头疼的困难就是看测试样例。因为很多需求Pintos手册都没有明确说明，所以想要知道为什么代码这么写和代码应该怎么写完全需要看测试样例。由于任务一已经积累了启动Pintos的经验，所以任务二的调试并没有特别困难。
 
-## 任务3：Advanced Scheduler（多级反馈调度）
+### 任务3：Advanced Scheduler（多级反馈调度）
 
-### 任务描述
+#### 任务描述
 
 根据Pintos手册的描述，多级反馈调度的提出是替代优先级捐赠的另一种方案。试想这样一种情况：在操作系统的运行过程中，不同的线程工作的特性是不同的，有一些线程有很多I/O操作，它需要很快的系统响应时间，但它并不需要占用很长时间CPU，而有一些线程的工作可能不需要很多I/O等待，可这就意味着它们需要更长的CPU时间。所以在这种情况下，我们并不能对所有线程的优先级都一视同仁（这里我们不考虑优先级捐赠的方法），所以Pintos手册里给出了一种量化优先级的方法，用nice值和recent\_CPU两个参数来对线程的优先级进行刻画。Pintos已经给出了相应的公式，公式如下：
 
@@ -1006,7 +1161,7 @@ _load\_avg__ = (59/60)\*__load\_avg__ + (1/60)\*__ready\_threads__
 
 另外，Pintos已经给出了fixed\_point.h的头文件，这是因为Pintos并不支持浮点数运算。
 
-### 实验过程
+#### 实验过程
 
 虽然是附加的实验，但是思路并不是很难，比任务二简单了不少，因为公式已经给出来了，所以只需要按照公式计算就行了。
 
@@ -1117,11 +1272,11 @@ timer_interrupt (struct intr_frame *args UNUSED)
 
 到此为止，任务三完成。
 
-### 实验结果
+#### 实验结果
 
 线上的测试结果为28分。
 
-### 问题与解决方法
+#### 问题与解决方法
 
 任务三总体来讲是比较简单的，直接用公式就好了，但是浮点数头文件的理解稍微有点困难，我查了一些网上的资料。
 
@@ -1133,17 +1288,58 @@ timer_interrupt (struct intr_frame *args UNUSED)
 
 更改后，timer的检查频率会增加，这样就不会出现该调度的时候cpu却什么都没做的情况了。
 
-当然还有另一种解决办法，就是把timer\_interrupt函数里面的时间片由4个变成20或50（更大的时间片），这样自然这个函数里干的事情就会变少。
+当然还有另一种解决办法，就是把timer\_interrupt函数里面的时间片由4个变成20或50（更大的时间片），这样自然这个函数里干的事情就会变少。但是这样的做法是不被官方推荐的，这会使得反馈调度的时间周期和规定的不一样，进而导致和结果错误。
+
+最后还有一种办法，就是较少timer_interrupt函数中的开销，做法就是减少链表的遍历次数。原先代码中recent_cpu和update_priority各自遍历了一次链表，所以改进方案为，遍历一次链表，同时更新这两个参数。
 
 ## 第四章 用户程序
 
-## Pintos的用户程序（Userprog）框架详细介绍
+### Pintos的用户程序（Userprog）框架详细介绍
 
-## 介绍pintos内存分配的实现流程和堆栈的使用。
+在现有的Pintos中，有如下文件是需要我去仔细查看的：
 
-## 任务1：ArgumentPassing
+threads/thread.h：包含了线程的定义，这里有Pintos中对线程的控制块。另外，在这个Project里，有以下宏定义是需要被使用的。
 
-### 任务描述
+userprog/process.c：负责装载ELF二进制文件，开启进程，还有切换页表。
+
+userprog/pagedir.c：负责管理页表，我不需要对这部分代码进行修改，但是有一部分的函数我或许是需要使用的。
+
+userprog/syscall.c：这是系统调用的处理部分，在一开始，它只支持exit这样一个系统调用。
+
+lib/user/syscall.c：为用户程序提供了库函数来使用系统调用。每一个函数都是用了内联的汇编代码来应对系统的调用指令和使用喜用调用。
+
+lib/syscall-nr.h：这个文件定义了系统调用的枚举变量。
+
+userprog/excption.c：处理异常，现在的处理方式只是简单地打印信息然后关闭进程。在后面的任务中有一部分会需要我来修改page_fault函数。
+
+gdt.c：Global Descriptor Table是一个解释当前正在使用的短的表。供参考了解。
+
+tss.c：Task-State Segment 会在进入中断处理部分时帮助Pintos变换堆栈。供参考了解。
+
+### pintos内存分配的实现流程和堆栈的使用
+
+在Pintos中，虚拟内存被分为两个区域，用户虚拟内存和内核虚拟内存，用户虚拟内存时从0开始一直到PHYS_BASE(0xc0000000[3GB])，而内核虚拟内存从PHYS_BASE到4GB。
+
+对于虚拟内存而言，它是以每个进程为单位来分配的。这其实也和上课讲的一样，线程时资源分配的基本单位。
+
+
+当内核切换进程的时候，它会改变调度器中的基址寄存器中的值。内核的虚拟内存是全局的，不管此刻使用的权限是内核还是用户，它们的地址映射都是一样的，虚拟内存地址中的PHYS_BASE对应物理地址的0，而虚拟内存的PHYS_BASE + 0x1234对应物理内存的0x1234。
+
+但是尽管如此，用户程序能访问的地址依然只是它自己的虚拟内存地址。如果它企图去访问内核的虚拟内存地址，那么就会发生page fault。而对于内核而言，企图去访问用户的虚拟内存也会出现page fault。
+
+Pintos手册里介绍了一些具体的内存实现的原理。我总结一下：
+
+- 对于80x86的调用操作：
+- 1、调用时将函数的参数一个一个的压栈，通常这一步使用汇编代码。压入的顺序应该是从右到左的。（这样从栈里取出来的时候就是从左到右的）。每一次压栈的时候需要让栈指针自减，在C语言里类似的有：*--sp=value
+- 2、调用部分把返回地址的指令(也就是调用此函数的函数的地址)压入堆栈，然后跳转到调用的函数里。简单来讲，就是在调用函数之前把当前的地址保护起来，然后跳转到需要调用的函数地址。
+- 3、调用函数的时候，就从当前的sp开始往下面找，栈顶为返回地址，所以跳过栈顶就是函数的参数了。
+- 4、调用函数的时候，如果函数有返回值，把它保存在eax中。
+- 5、需要退出函数的时候，进行出栈操作，使用栈顶保存的返回地址回到特定的地址位置，这里需要使用80x86的ret命令。
+- 6、返回后不要忘记把刚刚压栈的参数也弹出。不然堆栈不停增长，最后就会导致内存溢出。
+
+### 任务1：ArgumentPassing
+
+#### 任务描述
 
 在Pintos代码的process.c文件中已经存在一个函数process\_execute。这个函数是用来创建新的用户级进程的。但是目前Pintos中并不支持参数指令，所以我需要实现参数的传递。类似于process\_execute(&quot;ls -ahl&quot;)这样的两个参数的传入，在程序中使用的标记是argc和argv。
 
@@ -1151,7 +1347,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
 
 所以当前的目的是实现进程执行时候的参数传递。
 
-### 实验过程
+#### 实验过程
 
 其实刚看到这个任务有点没有头绪，然后我开始看Pintos手册。Pintos手册在这一章主要介绍了一些内存相关的东西，但这些并不是我现在需要去看的东西。所以我来到问题本身，看看现在的代码写了什么。
 
@@ -1325,17 +1521,19 @@ push_argument (void **esp, int argc, int argv[]){
 
 经过上述操作后，第一个任务基本就算是基本完成了，至此任务一结束。
 
-### 实验结果
+#### 实验结果
 
 因为这个时候还没有实现后面的syscall部分，所以没有办法进行直观的展示，所以本部分的实验结果先不进行展示。
 
-### 问题及解决办法
+#### 问题及解决办法
 
-我做完project1后再做project2时发现不能够开启运行磁盘，然后发现原来是我没有创建磁盘。而在创建磁盘后依然出现了代码不能运行的问题，最后发现是userprog文件夹里面的Makefile.var文件必须重新配置，在配置完后就可以开始做了。具体的解决方法我已在第一部分环境配置章节给出。
+我做完project1后再做project2时发现不能够开启运行磁盘，然后发现原来是我没有创建磁盘。而在创建磁盘后依然出现了代码不能运行的问题，最后发现是userprog文件夹里面的Makefile.var文件必须重新配置，在配置完后就可以开始做了。
 
-## 任务2：Process Control Syscalls
+另外一件事，就是在刚开始的过程中会出现page fault，原因是因为我在上一个project中实现sema的时候会使用schedule。这样一来，系统启动的时候在还没有分配页的时候就会在sema的信号量操作中进行schedule，进一步出发断言的错误。改正的方法是，加入一个全局变量READY_RUN，一开始为false，当runtask初始化完毕以后再设置成ture，而对于信号量操作，在READY_RUN等于true的时候才能够使用schedule。
 
-### 任务描述
+### 任务2：Process Control Syscalls
+
+#### 任务描述
 
 当前的Pintos不支持任何的系统调用，我需要再添加如下的系统调用：exit、halt、exec、wait。每个系统调用都有在syscall.c中用户线程级别的对应函数。
 
@@ -1345,7 +1543,7 @@ exit系统调用是直接退出；halt的作用是关闭系统；exec系统调�
 
 我需要解决因为无效内存而出现的系统调用失效的情况。Pintos已经给出了异常指针的几种情况：空指针、无效指针（指向了无效的地址空间）、指向内核空间。当出现了以上情况，我要做的就是关掉对应的用户进程。
 
-### 实验过程
+#### 实验过程
 
 经过上面对任务的描述，可以知道我需要干的事情就是进一步修改、实现exit、halt、exec、wait这四个函数。
 
@@ -1532,23 +1730,23 @@ process_wait (tid_t child_tid UNUSED)
 
 上面整体上的逻辑其实并没有内存部分绕。至此，任务二结束。
 
-### 实验结果
+#### 实验结果
 
 在写完任务二时我忘记给make check进行截图了。所以这里没有对应的make check的截图。
 
-### 问题及解决办法
+#### 问题及解决办法
 
 本任务最大的问题就是栈指针的形式不清楚，这导致我在写的时候出现了错误，然后调试的时候发生page\_fault错误，最简单的例子就是esp的使用，把\*（int \*）esp写成了\*esp。解决办法是：在我上GitHub参考其他Pintos实现代码的时候发现自己出现了错误，然后才把这个错误改正过来。
 
-## 任务3：File Operation Syscalls
+### 任务3：File Operation Syscalls
 
-### 任务描述
+#### 任务描述
 
 在上一个任务中我已经完成几个进程系统调用，在这个任务中，Pintos手册又要求实现另一部分系统调用，这部分是文件系统调用。
 
 Pintos的文件系统目前不是线程安全的，我必须确保文件系统调用不会同时调用多个文件系统调用（多个线程同时对一个文件进行操作）。需要实现的文件系统调用已经有在文件中有体现。
 
-### 实验过程
+#### 实验过程
 
 首先来看一下我们需要实现的函数，来到syscall-nr.h，当前project2部分还有这些函数没有实现。
 
@@ -1875,26 +2073,129 @@ sys_close (struct intr_frame* f)
 
 之后就是今年版本特有的检查点，浮点数了，对应前缀为fp的测试点，很遗憾的是，到提交这份报告的时候我仍然又三个点过不去，关于这一部分的实现，我会在问题及解决中给出。
 
-### 实验结果
+#### 实验结果
 
 最后的线上平台测试结果为93分。
 
-### 问题及解决办法
+#### 问题及解决办法
 
-## 第六章 总结及展望
+通过查看今年官网上最新Pintos的内容，发现今年多了一些测试点，所以我复制了tests文件夹下的userprog模块，重新进行了make check。发现出现了错误，原因是在新的测试点中出现了新的系统调用。
 
-本章对整个实验内容进行总结，介绍自己实验过程中遇到的共性问题、心得体会，以及下一步有哪些改进。
+再次查看Pintos手册，发现了新的系统调用practice。这个系统调用的声明为：
+```
+int practice(int i);
+```
+对于practice，描述是，这是一个不存在的函数调用，在现代的操作系统中并没有这样一个系统调用。它的作用时把int型的参数加一然后返回它。实现如下：
 
-此外，本章还需要结合整个实验过程，说明以下内容：
+```
+void 
+sys_practice (struct intr_frame *f)
+{
+  uint32_t *ptr = f->esp;
+  int n = *(int *)check_ptr (++ptr);
+  int ret_val;
 
-1)对专业知识基本概念、基本理论和典型方法的理解。
+  ret_val = n + 1;
 
-2)怎么建立模型。
+  f->eax = ret_val;
+}
+```
 
-3)如何利用基本原理解决复杂工程问题。
+完成这个之后有一部分的测试点可以通过了，这次的成绩时90。
 
-4)具有实验方案设计的能力。
+接下来我翻阅了2021fall的Pintos文档，发现还有一个浮点数的测试。所以接下来将讲述如何实现浮点数。
 
-5)如何对环境和社会的可持续发展。
+文档里这样描述：
+```
+The Pintos kernel does not currently support Foating point operations. You must update the OS so that
+both user programs and the kernel can use Foating point instructions.
+This may seem like a daunting task, but rest assurred, the OS doesn't have to do much when it comes
+to implementing Foating point instructions: the compiler does the hard work of generating Foating point
+instructions, and the hardware does the hard work of executing Foating point instructions. However, because
+there is only one Foating-point unit1
+(FPU) on the CPU, all threads on must share it. This is where the OS
+comes into play. The OS must:
+1. Save the state of the FPU on context switches
+2. Save the state of the FPU on interrupts & system calls
+```
+可以看到，大致意思就是说，现在的Pintos不支持浮点操作，我必须更新代码来实现浮点操作。
 
-26
+对于CPU来说，只有一个专门的单元来操作浮点，也就是FPU，所以所有的线程都需要共享这个存储器，那么我现在要做的就是如下的两件事：
+- 1、保存内容转换时FPU的状态。
+- 2、保存中断和系统调用时FPU的状态。
+该怎么实现文档也说了。
+```
+• Update one line of src/threads/start.S to allow FPU instructions to be executed on the hardware
+(see 4.2.2 Enabling the FPU)
+• Ensure Foating-point registers are initialized correctly when a new thread or process is created (see
+4.2.3 FPU Initialization), unlike with GPRs
+• Implement a system call to compute the value e (see 4.2.4 FPU Syscall)
+```
+接下来是文档中的步骤：
+```
+You must update this as follows:
+- orl $CR0_PE | CR0_PG | CR0_WP | CR0_EM, %eax
++ orl $CR0_PE | CR0_PG | CR0_WP, %eax
+in src/threads/start.S to remove the flag and indicate to the processor that the FPU is present.
+```
+首先到start.S文件夹下面，把上面的部分更新，告诉调度器现在浮点数是可以存在的。
+
+之后文档的描述如下：
+
+```
+you must ensure:
+1. Initialize the FPU at OS startup
+2. Re-initialize the FPU when a new thread is created
+3. Re-initialize the FPU when a new process is created
+```
+
+意思是我必须确保Pintos启动的时候FPU是打开的，然后再开启新线程和新进程的时候重新初始化FPU。当然，在初始化的时候也必须把之前的FPU保存起来，这也是这个任务的目标。
+
+然后接下来手册讲了一下需要使用汇编来直接操作寄存器。具体怎么操作？手册让我自己看代码。好吧，那我们开始吧。
+
+通过之前的学习，我已经明白当没有头绪的时候看测试用例就是最好的办法。然后我研究了一下测试用例，发现了下面的几种汇编的用法，通过网上的查询，asm volatile是用来调用汇编指令的。我发现了这样两种用法，那我把这两个东西搞明白应该就好了。
+
+```
+# init fpu
+    fninit
+    
+asm("fsave (%0); fninit; fsave (%1)" : : "g"(&fpu), "g"(&init_fpu));
+
+/* Invokes syscall NUMBER, passing argument ARG0, and returns the
+   return value as an `int'. */
+asm volatile("pushl %[arg0]; pushl %[number]; int $0x30; addl $8, %%esp"                       \
+                 : "=a"(retval)                                                                    \
+                 : [number] "i"(NUMBER), [arg0] "g"(ARG0)                                          \
+                 : "memory");                                                                      \
+```
+
+说实话，看完这段指令之后很懵，我知道这是汇编调用，但是具体格式确实不是很了解，所以之后照猫画虎。在网上，我找到了FPU中我需要的两个指令，如下所示。
+
+```
+FSAVE dest  Store FPU state: store FPU state into 94-bytes at dest
+FRSTOR src  Load FPU state: restore FPU state as saved by FSAVE
+```
+
+然后结合测试用例里面的写法我做出了如下的改进。
+按照要求所说的，创建的时候先保存再初始化，所以在thread_create和schedule中加入如下代码：
+
+```
+  asm volatile ("fsave %0"::"m"(cur_t->fpu_state[0]));
+  asm volatile ("fninit");
+  asm volatile ("fsave %0"::"m"(t->fpu_state[0]));
+  asm volatile ("frstor %0"::"m"(cur_t->fpu_state[0]));
+```
+
+当然，fpu_state是我新加入的成员变量，再thread的结构体中定义：
+
+```
+uint8_t fpu_state[FPU_SIZE];
+```
+
+然后再次进行make check，这次有93个pass，但是还是有三个测试点没有通过。其实我还挺庆幸的，因为这个汇编代码确实看的我有点头疼。
+
+因为时间原因，剩下的三个测试点我选择了放弃，至此任务三以一点遗憾告终。
+
+最终的线上成绩是94。
+
+
